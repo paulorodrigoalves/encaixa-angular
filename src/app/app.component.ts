@@ -1,46 +1,94 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil } from 'rxjs/operators';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { GavetaSvgComponent } from './shared/components/gaveta-svg/gaveta-svg.component';
-import { LayoutGerado, MedidasGaveta } from './core/models/models';
+import { MedidasGaveta, LayoutGerado, CatalogoCompletoDTO } from './core/models/models';
+import { ApiCatalogoService } from './core/services/api-catalogo.service';
+import { ApiLayoutService } from './core/services/api-layout.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, GavetaSvgComponent],
+  imports: [CommonModule, ReactiveFormsModule, GavetaSvgComponent, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
-  title = 'encaixa-angular';
+export class AppComponent implements OnInit, OnDestroy {
+  title = 'Encaixa';
+  form: FormGroup;
+  
+  catalogo: CatalogoCompletoDTO | null = null;
+  layout: LayoutGerado | null = null;
+  medidasGaveta: MedidasGaveta | null = null;
+  isLoading = false;
 
-  // Dados mockados para exibir a Gaveta logo na tela inicial!
-  medidasMock: MedidasGaveta = {
-    larguraMm: 600,
-    profundidadeMm: 450,
-    alturaMm: 100,
-    espessuraMaterialMm: 6,
-    margemFolgaMm: 2
-  };
+  private destroy$ = new Subject<void>();
 
-  layoutMock: LayoutGerado = {
-    larguraTotalMm: 596, // 600 - (2 * 2 margem)
-    profundidadeTotalMm: 446,
-    alturaTotalMm: 100,
-    espessuraDivisoriaMm: 6,
-    divisorias: [
-      { xMm: 198, yMm: 0, larguraMm: 6, profundidadeMm: 446, orientacao: 'VERTICAL' },
-      { xMm: 396, yMm: 0, larguraMm: 6, profundidadeMm: 446, orientacao: 'VERTICAL' },
-      { xMm: 0, yMm: 220, larguraMm: 198, profundidadeMm: 6, orientacao: 'HORIZONTAL' }
-    ],
-    objetosPosicionados: [
-      {
-        objeto: { id: '1', nome: 'Relógio', larguraMm: 80, profundidadeMm: 80, corHex: '#fee2e2' },
-        xMm: 20, yMm: 20, larguraRealMm: 80, profundidadeRealMm: 80
+  constructor(
+    private fb: FormBuilder,
+    private catalogoService: ApiCatalogoService,
+    private layoutService: ApiLayoutService
+  ) {
+    this.form = this.fb.group({
+      larguraMm: [600, [Validators.required, Validators.min(50), Validators.max(1200)]],
+      profundidadeMm: [450, [Validators.required, Validators.min(50), Validators.max(1200)]],
+      alturaMm: [100, [Validators.required, Validators.min(30), Validators.max(300)]],
+      materialId: ['', Validators.required],
+      templateId: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    // 1. Carrega o Catálogo (Materiais e Templates) do Backend
+    this.catalogoService.obterCatalogo().subscribe({
+      next: (dados) => {
+        this.catalogo = dados;
+        
+        // Auto-seleciona os primeiros itens, se existirem
+        if (dados.materiais.length > 0 && dados.templates.length > 0) {
+          this.form.patchValue({
+            materialId: dados.materiais[0].id,
+            templateId: dados.templates[0].id
+          });
+        }
       },
-      {
-        objeto: { id: '2', nome: 'Óculos', larguraMm: 160, profundidadeMm: 60, corHex: '#e0e7ff' },
-        xMm: 210, yMm: 50, larguraRealMm: 160, profundidadeRealMm: 60
-      }
-    ]
-  };
+      error: (err) => console.error('Erro ao carregar catálogo', err)
+    });
+
+    // 2. Escuta mudanças no formulário para chamar o Motor de Layout automaticamente
+    this.form.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(500), // Aguarda meio segundo após a digitação
+        filter(() => this.form.valid), // Só chama a API se os dados estiverem válidos
+        switchMap(valores => {
+          this.isLoading = true;
+          this.medidasGaveta = {
+            larguraMm: valores.larguraMm,
+            profundidadeMm: valores.profundidadeMm,
+            alturaMm: valores.alturaMm
+          };
+          return this.layoutService.gerarPreview(valores);
+        })
+      )
+      .subscribe({
+        next: (preview) => {
+          this.layout = preview;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Erro ao gerar layout', err);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 }
+
