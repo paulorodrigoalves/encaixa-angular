@@ -1,4 +1,4 @@
-<main class="min-h-screen bg-gray-100 p-8">
+<main class="min-h-screen bg-gray-100 p-8 font-sans">
   <div class="max-w-6xl mx-auto space-y-8">
     <header class="text-center">
       <h1 class="text-4xl font-bold text-slate-800">Encaixa - Layout Engine</h1>
@@ -14,76 +14,103 @@
       <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-8">
         
         <!-- Painel Esquerdo: Formulário Reativo -->
-        <div class="col-span-1 space-y-6">
-          <form [formGroup]="form" class="space-y-5">
-            <div>
-              <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Gaveta</h2>
-              <div class="mt-4 space-y-4">
-                
-                <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-slate-600">Largura (mm)</label>
-                  <input type="number" formControlName="larguraMm"
-                         class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
-                </div>
-
-                <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-slate-600">Profundidade (mm)</label>
-                  <input type="number" formControlName="profundidadeMm"
-                         class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
-                </div>
-
-                <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-slate-600">Altura (mm)</label>
-                  <input type="number" formControlName="alturaMm"
-                         class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+        <div class="col-span-1 space-y-6 flex flex-col justify-between">
+          <div>
+            <form [formGroup]="form" class="space-y-5">
+              <div>
+                <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Gaveta</h2>
+                <div class="mt-4 space-y-4">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-slate-600">Largura (mm)</label>
+                    <input type="number" formControlName="larguraMm"
+                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-slate-600">Profundidade (mm)</label>
+                    <input type="number" formControlName="profundidadeMm"
+                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-slate-600">Altura (mm)</label>
+                    <input type="number" formControlName="alturaMm"
+                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Configuração</h2>
-              <div class="mt-4 space-y-4">
-                
-                <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-slate-600">Material</label>
-                  <select formControlName="materialId"
-                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
-                    <option value="" disabled>Selecione o material...</option>
-                    @for (m of catalogo.materiais; track m.id) {
-                      <option [value]="m.id">{{ m.nome }} ({{ m.espessuraMm }}mm)</option>
-                    }
-                  </select>
+              <div>
+                <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Configuração</h2>
+                <div class="mt-4 space-y-4">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-slate-600">Material</label>
+                    <select formControlName="materialId"
+                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
+                      <option value="" disabled>Selecione o material...</option>
+                      @for (m of catalogo.materiais; track m.id) {
+                        <option [value]="m.id">{{ m.nome }} ({{ m.espessuraMm }}mm)</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-slate-600">Template</label>
+                    <select formControlName="templateId"
+                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
+                      <option value="" disabled>Selecione um template...</option>
+                      @for (t of catalogo.templates; track t.id) {
+                        <option [value]="t.id">{{ t.nome }} ({{ t.categoria }})</option>
+                      }
+                    </select>
+                  </div>
                 </div>
-
-                <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-slate-600">Template</label>
-                  <select formControlName="templateId"
-                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
-                    <option value="" disabled>Selecione um template...</option>
-                    @for (t of catalogo.templates; track t.id) {
-                      <option [value]="t.id">{{ t.nome }} ({{ t.categoria }})</option>
-                    }
-                  </select>
-                </div>
-
               </div>
-            </div>
-          </form>
+            </form>
 
-          @if (form.invalid) {
-            <div class="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
-              Corrija as medidas para gerar o layout. Mínimo 50mm, máximo 1200mm.
+            @if (form.invalid) {
+              <div class="p-3 mt-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                Corrija as medidas para gerar o layout. Mínimo 50mm, máximo 1200mm.
+              </div>
+            }
+          </div>
+
+          <!-- PRECIFICACAO PANEL -->
+          @if (layout?.orcamento; as orcamento) {
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm mt-6">
+              <h3 class="text-lg font-semibold text-slate-800 mb-3 border-b border-slate-200 pb-2">Orçamento</h3>
+              
+              <div class="space-y-2 text-sm text-slate-600">
+                <div class="flex justify-between">
+                  <span>Material Base</span>
+                  <span class="font-medium">{{ orcamento.valorMaterial | currency:'BRL' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Volume da Gaveta</span>
+                  <span class="font-medium">{{ orcamento.valorVolume | currency:'BRL' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Divisórias (Paineis)</span>
+                  <span class="font-medium">{{ orcamento.valorDivisorias | currency:'BRL' }}</span>
+                </div>
+                
+                <div class="pt-3 mt-3 border-t border-slate-200 flex justify-between items-center text-slate-900">
+                  <span class="font-bold text-base">Total</span>
+                  <span class="font-bold text-2xl text-emerald-600">{{ orcamento.valorTotal | currency:'BRL' }}</span>
+                </div>
+              </div>
+
+              <button class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-lg transition-colors">
+                Salvar Projeto
+              </button>
             </div>
           }
         </div>
 
         <!-- Painel Direito: Motor de Renderização SVG -->
-        <div class="col-span-1 md:col-span-3 relative">
+        <div class="col-span-1 md:col-span-3 relative bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
           
           <!-- Loader Overlay -->
           @if (isLoading) {
-            <div class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl transition-all">
-              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-800"></div>
+            <div class="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl transition-all">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800"></div>
             </div>
           }
 

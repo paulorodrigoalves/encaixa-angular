@@ -70,6 +70,13 @@ export interface ObjetoPosicionadoDTO {
   profundidadeRealMm: number;
 }
 
+export interface OrcamentoPreviewDTO {
+  valorMaterial: number;
+  valorDivisorias: number;
+  valorVolume: number;
+  valorTotal: number;
+}
+
 export interface PreviewLayoutResponse {
   larguraTotalMm: number;
   profundidadeTotalMm: number;
@@ -77,6 +84,7 @@ export interface PreviewLayoutResponse {
   divisorias: DivisoriaRenderDTO[];
   objetosPosicionados: ObjetoPosicionadoDTO[];
   espessuraDivisoriaMm: number;
+  orcamento: OrcamentoPreviewDTO;
 }
 
 // Aliases para manter compatibilidade com o componente SVG atual
