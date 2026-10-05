@@ -1,0 +1,74 @@
+<div class="w-full h-full min-h-[400px] border border-gray-300 rounded-xl p-6 bg-gray-50 flex items-center justify-center">
+  @if (layout && medidas) {
+    <svg
+      [attr.viewBox]="viewBox"
+      class="max-w-full max-h-[600px] drop-shadow-xl bg-white rounded-sm"
+      style="transition: all 0.3s ease-in-out"
+    >
+      <!-- Base do Organizador -->
+      <rect
+        x="0"
+        y="0"
+        [attr.width]="layout.larguraTotalMm"
+        [attr.height]="layout.profundidadeTotalMm"
+        fill="#f8f1e5"
+        stroke="#c2b092"
+        [attr.stroke-width]="layout.espessuraDivisoriaMm"
+      />
+
+      <!-- Linhas das Divisórias -->
+      @for (divisoria of layout.divisorias; track $index) {
+        <rect
+          [attr.x]="divisoria.xMm"
+          [attr.y]="divisoria.yMm"
+          [attr.width]="divisoria.larguraMm"
+          [attr.height]="divisoria.profundidadeMm"
+          fill="#d4c2a5"
+          stroke="#c2b092"
+          stroke-width="1"
+        />
+      }
+
+      <!-- Objetos Renderizados na Gaveta -->
+      @for (item of layout.objetosPosicionados; track item.objeto.id) {
+        <g class="cursor-pointer hover:opacity-90">
+          <rect
+            [attr.x]="item.xMm"
+            [attr.y]="item.yMm"
+            [attr.width]="item.larguraRealMm"
+            [attr.height]="item.profundidadeRealMm"
+            [attr.fill]="item.objeto.corHex || '#e2e8f0'"
+            fill-opacity="0.9"
+            stroke="#94a3b8"
+            stroke-width="1.5"
+            rx="4"
+            ry="4"
+          />
+          
+          <!-- Rótulo do Objeto (Apenas se o espaço for grande o suficiente) -->
+          @if (item.larguraRealMm >= 40 && item.profundidadeRealMm >= 25) {
+            <text
+              [attr.x]="item.xMm + (item.larguraRealMm / 2)"
+              [attr.y]="item.yMm + (item.profundidadeRealMm / 2)"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              fill="#334155"
+              font-size="12"
+              font-family="system-ui"
+              font-weight="500"
+            >
+              {{ item.objeto.nome }}
+            </text>
+          }
+        </g>
+      }
+    </svg>
+  } @else {
+    <div class="flex flex-col items-center text-gray-400 gap-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+      <span class="text-lg font-medium">Insira as medidas para visualizar o organizador</span>
+    </div>
+  }
+</div>

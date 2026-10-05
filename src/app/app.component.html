@@ -1,0 +1,54 @@
+<main class="min-h-screen bg-gray-100 p-8">
+  <div class="max-w-5xl mx-auto space-y-8">
+    <header class="text-center">
+      <h1 class="text-4xl font-bold text-slate-800">Encaixa - Organizadores Sob Medida</h1>
+      <p class="text-slate-500 mt-2">Visualizador 2D em Angular 19</p>
+    </header>
+
+    <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <!-- Painel Esquerdo: Ferramentas -->
+      <div class="col-span-1 space-y-6">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-700">Medidas da Gaveta</h2>
+          <div class="mt-4 space-y-3">
+            <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <span class="text-slate-600">Largura</span>
+              <span class="font-medium text-slate-800">{{ medidasMock.larguraMm }} mm</span>
+            </div>
+            <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <span class="text-slate-600">Profundidade</span>
+              <span class="font-medium text-slate-800">{{ medidasMock.profundidadeMm }} mm</span>
+            </div>
+            <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <span class="text-slate-600">Material</span>
+              <span class="font-medium text-slate-800">{{ medidasMock.espessuraMaterialMm }} mm</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-semibold text-slate-700">Objetos</h2>
+          <ul class="mt-4 space-y-2">
+            @for (item of layoutMock.objetosPosicionados; track item.objeto.id) {
+              <li class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-md">
+                <div class="w-4 h-4 rounded-full border border-gray-300" [style.background-color]="item.objeto.corHex"></div>
+                <span class="text-slate-700 text-sm font-medium">{{ item.objeto.nome }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Painel Direito: Motor de Renderização SVG -->
+      <div class="col-span-1 md:col-span-2">
+        <app-gaveta-svg 
+          [layout]="layoutMock" 
+          [medidas]="medidasMock">
+        </app-gaveta-svg>
+      </div>
+
+    </section>
+  </div>
+</main>
+<router-outlet></router-outlet>
