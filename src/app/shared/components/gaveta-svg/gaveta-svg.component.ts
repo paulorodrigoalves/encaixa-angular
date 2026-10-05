@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LayoutGerado, MedidasGaveta } from '../../core/models/models';
+import { LayoutGerado, MedidasGaveta } from '../../../core/models/models';
 
 @Component({
   selector: 'app-gaveta-svg',
@@ -18,3 +18,4 @@ export class GavetaSvgComponent {
     return `0 0 ${this.layout.larguraTotalMm} ${this.layout.profundidadeTotalMm}`;
   }
 }
+
