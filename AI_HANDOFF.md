@@ -4,8 +4,8 @@
 > Este documento contém o contexto arquitetural, UI/UX e o estado atual do projeto. **Sempre leia este documento antes de propor refatorações globais ou mudar a estrutura de módulos.**
 
 ## 1. Visão Geral do Sistema
-O **Encaixa** é um sistema B2B/B2C para venda de organizadores em acrílico. 
-Este repositório contém a aplicação client-side que renderiza o organizador (simulador) em tempo real, servindo como uma ferramenta de design interativa.
+O **Encaixa** é um sistema B2B/B2C para venda de organizadores em acrílico e MDF (com revestimentos em tecidos como veludo, courino, linho). 
+Este repositório contém a aplicação client-side que renderiza o organizador (simulador) em tempo real, servindo como uma ferramenta de design interativa que calcula descontos milimétricos dos tecidos/materiais e gera as medidas exatas para a marcenaria.
 
 *   **Stack:** Angular 19, Standalone Components, Reactive Forms, Tailwind CSS v3.
 *   **Repositório Backend Par:** `encaixa-java` (Spring Boot 3, PostgreSQL, Keycloak).
@@ -31,3 +31,4 @@ O fluxo público está 100% testado. O próximo passo é fechar o laço e permit
     *   Se estiver, fazer um POST para `/api/projetos` contendo o payload atual do simulador.
 3.  **Interceptor:** Garantir que o Angular está enviando o `Bearer Token` do Keycloak no header Authorization para rotas que não sejam `/api/public`.
 4.  **Dashboards Restritos:** Criar as rotas lazy-loaded para a "Área do Cliente" (`/app/projetos` - onde ele visualiza pedidos salvos) e a "Área Admin" (`/admin` - CRUD de materiais/templates/esteira de produção).
+
