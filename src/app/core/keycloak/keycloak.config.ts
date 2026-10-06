@@ -11,8 +11,8 @@ export const keycloak = new Keycloak({
 export function initializeKeycloak() {
   return () =>
     keycloak.init({
-      onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
+      // onLoad: 'check-sso',
+      checkLoginIframe: false,
       pkceMethod: 'S256'
     });
 }
@@ -23,3 +23,4 @@ export const provideKeycloakAngular: Provider = {
   useFactory: initializeKeycloak,
   multi: true
 };
+
