@@ -21,11 +21,10 @@ Este repositório contém a aplicação client-side que renderiza o organizador 
 ✅ **Integração Backend:** O formulário possui um `debounceTime(500)` que dispara um POST silencioso para a API Java (`LayoutService.ts`).
 ✅ **Motor Gráfico e Financeiro:** Ao receber a resposta, o painel central atualiza instantaneamente o desenho do SVG com as paredes do organizador, e o painel inferior direito mostra o card dinâmico de **Orçamento** com formatação de moeda (BRL).
 ✅ **Navbar e Auth:** A `<app-navbar>` possui os botões de Login / Logout acoplados ao Keycloak. Ao logar, ela mostra o nome do usuário extraído do JWT e um menu de Admin condicional (baseado nas roles do token).
-✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no banco e redireciona para `MeusProjetosComponent` (`/app/projetos`), exibindo os projetos salvos, status da compra, código de rastreio e linha do tempo de produção (`PedidoEtapa`).
-✅ **Simulador por Objetos:** A `HomeComponent` agora possui alternância entre os modos **"Por Template"** e **"Pelos Meus Objetos"**, permitindo incrementar/decrementar a quantidade de cada `TipoObjeto` do catálogo, renderizando os rótulos e cores dos objetos dentro dos compartimentos no SVG e exibindo alertas amigáveis quando os objetos não cabem na gaveta.
-✅ **Área Admin (`/admin`):** Criada a `AdminComponent` conectada ao `ApiAdminService` para publicação de novas regras de precificação, aprovação de compras, registro de etapas da esteira de produção e visualização da **Ficha Técnica / Plano de Corte para Marcenaria**.
+✅ **Persistência, Carrinho, Frete e Área do Cliente (`/app/projetos`):** `authInterceptor` injeta o Bearer Token do Keycloak. O botão "Salvar Projeto" adiciona ao carrinho e redireciona para `MeusProjetosComponent` (`/app/projetos`), que exibe o painel de cotação de pacote/frete (`EstimadorPacote`), coleta o endereço de entrega, mostra os projetos salvos, código de rastreio e a linha do tempo de produção (`PedidoEtapa`).
+✅ **Simulador por Objetos:** A `HomeComponent` possui alternância entre os modos **"Por Template"** e **"Pelos Meus Objetos"**, permitindo incrementar/decrementar a quantidade de cada `TipoObjeto` do catálogo e renderizando os objetos dentro dos compartimentos no SVG.
+✅ **Área Admin (`/admin`):** `AdminComponent` possui abas para **Pedidos & Precificação** (regras de preço, aprovação de compras, esteira de produção e impressão da **Ficha Técnica / Plano de Corte para Marcenaria**) e **Catálogo (Materiais & Objetos)** (cadastro e ativação/desativação de Tipos de Material, Materiais/Revestimentos e Tipos de Objeto).
 
 ## 4. Próximos Passos (To-Do / Onde Paramos)
-1.  **Cálculo de Frete / Endereço do Cliente:** Integrar `EstimadorPacote` e formulário de endereço na finalização da compra.
-2.  **Gestão de Catálogo no Admin:** Telas para cadastrar/editar Materiais, Templates e Tipos de Objeto.
+1.  **Integração de Pagamento e WhatsApp:** Conectar notificações de etapas e checkout de pagamento.
 

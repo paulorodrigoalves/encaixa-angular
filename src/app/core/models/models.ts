@@ -243,6 +243,44 @@ export interface PlanoCorteProjetoDTO {
   compartimentos: CompartimentoCorteDTO[];
 }
 
+export interface TipoMaterialAdminDTO {
+  id: string;
+  nome: string;
+  espessuraMm: number;
+  margemMm: number;
+  ativo: boolean;
+}
+
+export interface MaterialAdminDTO {
+  id: string;
+  nome: string;
+  cor: string;
+  valorFixoAdicional: number;
+  tipoMaterialId: string;
+  tipoMaterialNome: string;
+  espessuraMm: number;
+  margemMm: number;
+  ativo: boolean;
+}
+
+export interface TipoObjetoAdminDTO {
+  id: string;
+  nome: string;
+  categoria: string;
+  larguraMinMm: number;
+  larguraMaxMm: number;
+  profundidadeMinMm: number;
+  profundidadeMaxMm: number;
+  alturaMinMm: number | null;
+  ativo: boolean;
+}
+
+export interface CatalogoAdminDTO {
+  tiposMaterial: TipoMaterialAdminDTO[];
+  materiais: MaterialAdminDTO[];
+  tiposObjeto: TipoObjetoAdminDTO[];
+}
+
 // Aliases para manter compatibilidade com o componente SVG atual
 export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaMm: number };
 export type LayoutGerado = PreviewLayoutResponse;

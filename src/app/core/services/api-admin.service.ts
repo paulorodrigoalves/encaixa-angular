@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  CatalogoAdminDTO,
   CompraAdminDTO,
   EtapaProducaoDTO,
   PlanoCorteProjetoDTO,
@@ -47,5 +48,38 @@ export class ApiAdminService {
   registrarEtapa(pedidoId: string, req: RegistrarEtapaRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/pedidos/${pedidoId}/etapas`, req);
   }
+
+  obterCatalogoAdmin(): Observable<CatalogoAdminDTO> {
+    return this.http.get<CatalogoAdminDTO>(`${this.baseUrl}/catalogo`);
+  }
+
+  criarTipoMaterial(req: { nome: string; espessuraMm: number; margemMm: number }): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/catalogo/tipos-material`, req);
+  }
+
+  criarMaterial(req: { nome: string; cor: string; valorFixoAdicional: number; tipoMaterialId: string }): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/catalogo/materiais`, req);
+  }
+
+  toggleAtivoMaterial(id: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/catalogo/materiais/${id}/toggle-ativo`, {});
+  }
+
+  criarTipoObjeto(req: {
+    nome: string;
+    categoria: string;
+    larguraMinMm: number;
+    larguraMaxMm: number;
+    profundidadeMinMm: number;
+    profundidadeMaxMm: number;
+    alturaMinMm: number | null;
+  }): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/catalogo/tipos-objeto`, req);
+  }
+
+  toggleAtivoTipoObjeto(id: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/catalogo/tipos-objeto/${id}/toggle-ativo`, {});
+  }
 }
+
 
