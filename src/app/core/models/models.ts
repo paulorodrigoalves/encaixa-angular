@@ -92,7 +92,8 @@ export interface CriarProjetoRequest {
   profundidadeMm: number;
   alturaMm: number;
   materialId: string;
-  templateId: string;
+  templateId?: string;
+  itensObjeto?: ItemObjetoSelecionado[];
   quantidade?: number;
 }
 

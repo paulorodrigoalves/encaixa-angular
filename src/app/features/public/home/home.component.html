@@ -2,7 +2,7 @@
   <div class="max-w-6xl mx-auto space-y-8">
     <header class="text-center">
       <h1 class="text-4xl font-bold text-slate-800">Encaixa - Layout Engine</h1>
-      <p class="text-slate-500 mt-2">Angular 19 integrado com Spring Boot</p>
+      <p class="text-slate-500 mt-2">Configure por Template ou deixe o motor calcular pelos seus Objetos</p>
     </header>
 
     @if (!catalogo) {
@@ -11,63 +11,116 @@
         <span class="ml-4 text-slate-500 text-lg">Carregando catálogo do servidor...</span>
       </div>
     } @else {
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-12 gap-8">
         
         <!-- Painel Esquerdo: Formulário Reativo -->
-        <div class="col-span-1 space-y-6 flex flex-col justify-between">
+        <div class="col-span-1 md:col-span-4 space-y-6 flex flex-col justify-between">
           <div>
             <form [formGroup]="form" class="space-y-5">
               <div>
-                <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Gaveta</h2>
-                <div class="mt-4 space-y-4">
+                <h2 class="text-lg font-semibold text-slate-700 border-b pb-2">1. Medidas da Gaveta</h2>
+                <div class="mt-3 grid grid-cols-3 gap-2">
                   <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-slate-600">Largura (mm)</label>
+                    <label class="text-xs font-medium text-slate-600">Largura (mm)</label>
                     <input type="number" formControlName="larguraMm"
-                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                          class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
                   </div>
                   <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-slate-600">Profundidade (mm)</label>
+                    <label class="text-xs font-medium text-slate-600">Profund. (mm)</label>
                     <input type="number" formControlName="profundidadeMm"
-                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                          class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
                   </div>
                   <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-slate-600">Altura (mm)</label>
+                    <label class="text-xs font-medium text-slate-600">Altura (mm)</label>
                     <input type="number" formControlName="alturaMm"
-                          class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+                          class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
                   </div>
                 </div>
               </div>
 
               <div>
-                <h2 class="text-xl font-semibold text-slate-700 border-b pb-2">Configuração</h2>
-                <div class="mt-4 space-y-4">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-slate-600">Material</label>
-                    <select formControlName="materialId"
-                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
-                      <option value="" disabled>Selecione o material...</option>
-                      @for (m of catalogo.materiais; track m.id) {
-                        <option [value]="m.id">{{ m.nome }} ({{ m.espessuraMm }}mm)</option>
-                      }
-                    </select>
-                  </div>
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-slate-600">Template</label>
+                <h2 class="text-lg font-semibold text-slate-700 border-b pb-2">2. Material & Acabamento</h2>
+                <div class="mt-3">
+                  <select formControlName="materialId"
+                          class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
+                    <option value="" disabled>Selecione o material...</option>
+                    @for (m of catalogo.materiais; track m.id) {
+                      <option [value]="m.id">{{ m.nome }} ({{ m.espessuraMm }}mm)</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <h2 class="text-lg font-semibold text-slate-700 border-b pb-2">3. Modo de Divisão</h2>
+                <div class="mt-3 grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                  <button type="button"
+                          (click)="alternarModo('TEMPLATE')"
+                          [class]="modoOrigem === 'TEMPLATE'
+                            ? 'bg-white text-slate-900 shadow-sm font-semibold py-2 px-3 rounded-lg text-xs transition-all'
+                            : 'text-slate-600 hover:text-slate-900 py-2 px-3 rounded-lg text-xs transition-all'">
+                    Por Template
+                  </button>
+                  <button type="button"
+                          (click)="alternarModo('OBJETOS')"
+                          [class]="modoOrigem === 'OBJETOS'
+                            ? 'bg-white text-slate-900 shadow-sm font-semibold py-2 px-3 rounded-lg text-xs transition-all'
+                            : 'text-slate-600 hover:text-slate-900 py-2 px-3 rounded-lg text-xs transition-all'">
+                    Pelos Meus Objetos
+                  </button>
+                </div>
+
+                @if (modoOrigem === 'TEMPLATE') {
+                  <div class="mt-4 flex flex-col gap-1">
+                    <label class="text-xs font-medium text-slate-600">Escolha o Template</label>
                     <select formControlName="templateId"
-                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
+                            class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white">
                       <option value="" disabled>Selecione um template...</option>
                       @for (t of catalogo.templates; track t.id) {
                         <option [value]="t.id">{{ t.nome }} ({{ t.categoria }})</option>
                       }
                     </select>
                   </div>
-                </div>
+                } @else {
+                  <div class="mt-4 space-y-2 max-h-60 overflow-y-auto pr-1">
+                    @for (obj of catalogo.tiposObjeto; track obj.id) {
+                      <div class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-slate-50/60">
+                        <div>
+                          <p class="text-sm font-medium text-slate-800">{{ obj.nome }}</p>
+                          <p class="text-[11px] text-slate-400">
+                            {{ obj.larguraMinMm }}–{{ obj.larguraMaxMm }} x {{ obj.profundidadeMinMm }}–{{ obj.profundidadeMaxMm }}mm
+                            @if (obj.alturaMinMm) { · Alt mín {{ obj.alturaMinMm }}mm }
+                          </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button type="button" (click)="alterarQuantidade(obj.id, -1)"
+                                  class="w-7 h-7 rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-sm flex items-center justify-center">
+                            -
+                          </button>
+                          <span class="w-6 text-center text-sm font-semibold text-slate-800">
+                            {{ obterQuantidade(obj.id) }}
+                          </span>
+                          <button type="button" (click)="alterarQuantidade(obj.id, 1)"
+                                  class="w-7 h-7 rounded-md bg-slate-800 text-white hover:bg-slate-900 font-bold text-sm flex items-center justify-center">
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             </form>
 
             @if (form.invalid) {
-              <div class="p-3 mt-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
-                Corrija as medidas para gerar o layout. Mínimo 50mm, máximo 1200mm.
+              <div class="p-3 mt-4 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+                Corrija as medidas da gaveta (Largura/Profundidade: 50 a 1200mm, Altura: 30 a 300mm).
+              </div>
+            }
+
+            @if (erroLayout) {
+              <div class="p-3 mt-4 bg-amber-50 text-amber-800 text-xs rounded-lg border border-amber-200 font-medium">
+                {{ erroLayout }}
               </div>
             }
           </div>
@@ -97,7 +150,7 @@
                 </div>
               </div>
 
-              <button (click)="salvarProjeto()" [disabled]="isSaving || form.invalid"
+              <button (click)="salvarProjeto()" [disabled]="isSaving || form.invalid || !!erroLayout"
                       class="w-full mt-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors">
                 {{ isSaving ? 'Salvando...' : 'Salvar Projeto' }}
               </button>
@@ -110,7 +163,7 @@
         </div>
 
         <!-- Painel Direito: Motor de Renderização SVG -->
-        <div class="col-span-1 md:col-span-3 relative bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
+        <div class="col-span-1 md:col-span-8 relative bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
           
           <!-- Loader Overlay -->
           @if (isLoading) {
@@ -130,5 +183,3 @@
     }
   </div>
 </main>
-
-

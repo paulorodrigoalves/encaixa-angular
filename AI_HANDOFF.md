@@ -22,8 +22,8 @@ Este repositório contém a aplicação client-side que renderiza o organizador 
 ✅ **Motor Gráfico e Financeiro:** Ao receber a resposta, o painel central atualiza instantaneamente o desenho do SVG com as paredes do organizador, e o painel inferior direito mostra o card dinâmico de **Orçamento** com formatação de moeda (BRL).
 ✅ **Navbar e Auth:** A `<app-navbar>` possui os botões de Login / Logout acoplados ao Keycloak. Ao logar, ela mostra o nome do usuário extraído do JWT e um menu de Admin condicional (baseado nas roles do token).
 ✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no backend e redireciona para `MeusProjetosComponent` (`/app/projetos`).
+✅ **Simulador por Objetos:** A `HomeComponent` agora possui alternância entre os modos **"Por Template"** e **"Pelos Meus Objetos"**, permitindo incrementar/decrementar a quantidade de cada `TipoObjeto` do catálogo, renderizando os rótulos e cores dos objetos dentro dos compartimentos no SVG e exibindo alertas amigáveis quando os objetos não cabem na gaveta.
 
 ## 4. Próximos Passos (To-Do / Onde Paramos)
-1.  **Simulador por Objetos:** Adicionar aba/modo no simulador para o cliente escolher `TipoObjeto` e quantidades (usando o `GeradorLayoutPorObjetos` do backend) além do modo de Templates.
-2.  **Área Admin (`/admin`):** Criar os componentes administrativos para gerenciar o catálogo, regras de precificação e esteira de produção (`PedidoEtapa`).
+1.  **Área Admin (`/admin`):** Criar os componentes administrativos para gerenciar o catálogo, regras de precificação e esteira de produção (`PedidoEtapa`).
 
