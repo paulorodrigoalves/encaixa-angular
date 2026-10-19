@@ -5,6 +5,7 @@ import { ApiAdminService } from '../../core/services/api-admin.service';
 import {
   CompraAdminDTO,
   EtapaProducaoDTO,
+  PlanoCorteProjetoDTO,
   RegraPrecificacaoDTO
 } from '../../core/models/models';
 import { keycloak } from '../../core/keycloak/keycloak.config';
@@ -18,7 +19,7 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
       <div class="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 class="text-3xl font-bold text-slate-800">Painel Administrativo</h1>
-          <p class="text-slate-500 mt-1">Gestão de regras de precificação, aprovação de compras e esteira de marcenaria</p>
+          <p class="text-slate-500 mt-1">Gestão de regras de precificação, aprovação de compras e plano de corte da marcenaria</p>
         </div>
 
         @if (mensagemFeedback) {
@@ -96,11 +97,16 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                       </p>
                     </div>
 
-                    <div class="flex items-center gap-4">
-                      <div class="text-right">
+                    <div class="flex flex-wrap items-center gap-3">
+                      <div class="text-right mr-2">
                         <span class="block text-xs text-slate-400">Total</span>
                         <span class="text-lg font-bold text-emerald-600">{{ c.valorTotal | currency:'BRL' }}</span>
                       </div>
+
+                      <button (click)="alternarPlanoCorte(c.compraId)"
+                              class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition-colors">
+                        {{ planosCorte[c.compraId] ? 'Ocultar Plano de Corte' : 'Ver Plano de Corte (Marcenaria)' }}
+                      </button>
 
                       @if (!c.pedidoId) {
                         <button (click)="aprovarCompra(c.compraId)"
@@ -110,6 +116,84 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                       }
                     </div>
                   </div>
+
+                  <!-- PLANO DE CORTE DO MARCENEIRO -->
+                  @if (planosCorte[c.compraId]; as planos) {
+                    <div class="mt-3 p-4 bg-white rounded-xl border border-indigo-200 space-y-4">
+                      @for (pl of planos; track pl.projetoId) {
+                        <div class="space-y-3">
+                          <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2">
+                            <div>
+                              <h4 class="text-sm font-bold text-slate-800">
+                                Ficha Técnica de Corte — {{ pl.materialNome }} ({{ pl.tipoMaterialNome }})
+                              </h4>
+                              <p class="text-xs text-slate-500">
+                                Gaveta informada: <strong>{{ pl.larguraGavetaMm }} x {{ pl.profundidadeGavetaMm }} x {{ pl.alturaGavetaMm }} mm</strong>
+                                · Margem descontada: <strong>{{ pl.margemSegurancaMm }} mm</strong>
+                                · Espessura final parede (c/ revestimento): <strong>{{ pl.espessuraMaterialMm }} mm</strong>
+                              </p>
+                            </div>
+                            <div class="text-right text-xs bg-indigo-50 text-indigo-900 px-3 py-1.5 rounded-lg font-semibold">
+                              Medida Externa Pronta: {{ pl.larguraExternaOrganizadorMm }} x {{ pl.profundidadeExternaOrganizadorMm }} x {{ pl.alturaGavetaMm }} mm
+                              (Qtd: {{ pl.quantidadeOrganizadores }})
+                            </div>
+                          </div>
+
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Tabela de Peças a Cortar -->
+                            <div>
+                              <h5 class="text-xs font-bold uppercase text-slate-500 mb-2">Peças / Painéis para Corte</h5>
+                              <table class="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                                <thead class="bg-slate-100 text-slate-700">
+                                  <tr>
+                                    <th class="p-2">Peça</th>
+                                    <th class="p-2 text-center">Qtd</th>
+                                    <th class="p-2 text-right">Comprimento x Altura</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (peca of pl.pecasCorte; track $index) {
+                                    <tr class="border-t border-slate-100">
+                                      <td class="p-2 font-medium text-slate-800">{{ peca.descricao }}</td>
+                                      <td class="p-2 text-center font-bold text-indigo-700">{{ peca.quantidade }}x</td>
+                                      <td class="p-2 text-right font-mono">{{ peca.comprimentoMm }} x {{ peca.alturaMm }} mm</td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+
+                            <!-- Tabela de Vãos Internos (Conferência) -->
+                            <div>
+                              <h5 class="text-xs font-bold uppercase text-slate-500 mb-2">Conferência dos Vãos Internos ({{ pl.compartimentos.length }})</h5>
+                              <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-lg">
+                                <table class="w-full text-xs text-left">
+                                  <thead class="bg-slate-100 text-slate-700 sticky top-0">
+                                    <tr>
+                                      <th class="p-2">#</th>
+                                      <th class="p-2">Posição (X, Y)</th>
+                                      <th class="p-2 text-right">Vão Interno (L x P)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    @for (comp of pl.compartimentos; track comp.indice) {
+                                      <tr class="border-t border-slate-100">
+                                        <td class="p-2 font-bold text-slate-600">Vão {{ comp.indice }}</td>
+                                        <td class="p-2 font-mono text-slate-500">({{ comp.posXMm }}, {{ comp.posYMm }}) mm</td>
+                                        <td class="p-2 text-right font-mono font-semibold text-slate-800">
+                                          {{ comp.larguraInternaMm }} x {{ comp.profundidadeInternaMm }} mm
+                                        </td>
+                                      </tr>
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
 
                   <!-- Controle de Etapas se já existe Pedido -->
                   @if (c.pedidoId; as pid) {
@@ -171,6 +255,7 @@ export class AdminComponent implements OnInit {
 
   etapasCatalogo: EtapaProducaoDTO[] = [];
   compras: CompraAdminDTO[] = [];
+  planosCorte: Record<string, PlanoCorteProjetoDTO[] | undefined> = {};
 
   etapaSelecionada: Record<string, string> = {};
   rastreioInput: Record<string, string> = {};
@@ -219,6 +304,19 @@ export class AdminComponent implements OnInit {
             }
           }
         }
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  alternarPlanoCorte(compraId: string): void {
+    if (this.planosCorte[compraId]) {
+      delete this.planosCorte[compraId];
+      return;
+    }
+    this.adminService.obterPlanoCorte(compraId).subscribe({
+      next: (planos) => {
+        this.planosCorte[compraId] = planos;
       },
       error: (err) => this.tratarErro(err)
     });

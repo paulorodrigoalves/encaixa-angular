@@ -167,6 +167,38 @@ export interface RegistrarEtapaRequest {
   codigoRastreio?: string;
 }
 
+export interface PecaCorteDTO {
+  descricao: string;
+  quantidade: number;
+  comprimentoMm: number;
+  alturaMm: number;
+  espessuraMm: number;
+}
+
+export interface CompartimentoCorteDTO {
+  indice: number;
+  posXMm: number;
+  posYMm: number;
+  larguraInternaMm: number;
+  profundidadeInternaMm: number;
+}
+
+export interface PlanoCorteProjetoDTO {
+  projetoId: string;
+  materialNome: string;
+  tipoMaterialNome: string;
+  quantidadeOrganizadores: number;
+  larguraGavetaMm: number;
+  profundidadeGavetaMm: number;
+  alturaGavetaMm: number;
+  margemSegurancaMm: number;
+  espessuraMaterialMm: number;
+  larguraExternaOrganizadorMm: number;
+  profundidadeExternaOrganizadorMm: number;
+  pecasCorte: PecaCorteDTO[];
+  compartimentos: CompartimentoCorteDTO[];
+}
+
 // Aliases para manter compatibilidade com o componente SVG atual
 export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaMm: number };
 export type LayoutGerado = PreviewLayoutResponse;
