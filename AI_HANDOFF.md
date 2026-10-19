@@ -23,7 +23,9 @@ Este repositório contém a aplicação client-side que renderiza o organizador 
 ✅ **Navbar e Auth:** A `<app-navbar>` possui os botões de Login / Logout acoplados ao Keycloak. Ao logar, ela mostra o nome do usuário extraído do JWT e um menu de Admin condicional (baseado nas roles do token).
 ✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no backend e redireciona para `MeusProjetosComponent` (`/app/projetos`).
 ✅ **Simulador por Objetos:** A `HomeComponent` agora possui alternância entre os modos **"Por Template"** e **"Pelos Meus Objetos"**, permitindo incrementar/decrementar a quantidade de cada `TipoObjeto` do catálogo, renderizando os rótulos e cores dos objetos dentro dos compartimentos no SVG e exibindo alertas amigáveis quando os objetos não cabem na gaveta.
+✅ **Área Admin (`/admin`):** Criada a `AdminComponent` conectada ao `ApiAdminService` para publicação de novas regras de precificação, aprovação de compras e registro de etapas da esteira de produção (`PedidoEtapa` com código de rastreio e histórico).
 
 ## 4. Próximos Passos (To-Do / Onde Paramos)
-1.  **Área Admin (`/admin`):** Criar os componentes administrativos para gerenciar o catálogo, regras de precificação e esteira de produção (`PedidoEtapa`).
+1.  **Visualização do Plano de Corte:** Exibir a lista de peças e medidas de corte para o marceneiro no painel Admin e/ou detalhe do pedido.
+2.  **Acompanhamento de Pedido pelo Cliente:** Mostrar a linha do tempo de etapas de produção (`PedidoEtapa`) na tela `/app/projetos`.
 

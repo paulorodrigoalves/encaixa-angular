@@ -114,6 +114,48 @@ export interface ProjetoSalvoResponse {
   criadoEm: string;
 }
 
+export interface RegraPrecificacaoDTO {
+  id: string;
+  precoPorLitro: number;
+  precoPorCm2Divisoria: number;
+  vigenteDesde: string;
+  criadoPor: string;
+}
+
+export interface EtapaProducaoDTO {
+  id: string;
+  nome: string;
+  ordem: number;
+  usaRastreio: boolean;
+}
+
+export interface PedidoEtapaHistoricoDTO {
+  id: string;
+  nomeEtapa: string;
+  observacao: string | null;
+  criadoEm: string;
+}
+
+export interface CompraAdminDTO {
+  compraId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  statusCompra: string;
+  valorTotal: number;
+  totalProjetos: number;
+  criadoEm: string;
+  pedidoId: string | null;
+  etapaAtual: string | null;
+  codigoRastreio: string | null;
+  historicoEtapas: PedidoEtapaHistoricoDTO[];
+}
+
+export interface RegistrarEtapaRequest {
+  etapaId: string;
+  observacao?: string;
+  codigoRastreio?: string;
+}
+
 // Aliases para manter compatibilidade com o componente SVG atual
 export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaMm: number };
 export type LayoutGerado = PreviewLayoutResponse;
