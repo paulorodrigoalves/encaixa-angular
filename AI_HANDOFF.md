@@ -21,11 +21,11 @@ Este repositório contém a aplicação client-side que renderiza o organizador 
 ✅ **Integração Backend:** O formulário possui um `debounceTime(500)` que dispara um POST silencioso para a API Java (`LayoutService.ts`).
 ✅ **Motor Gráfico e Financeiro:** Ao receber a resposta, o painel central atualiza instantaneamente o desenho do SVG com as paredes do organizador, e o painel inferior direito mostra o card dinâmico de **Orçamento** com formatação de moeda (BRL).
 ✅ **Navbar e Auth:** A `<app-navbar>` possui os botões de Login / Logout acoplados ao Keycloak. Ao logar, ela mostra o nome do usuário extraído do JWT e um menu de Admin condicional (baseado nas roles do token).
-✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no backend e redireciona para `MeusProjetosComponent` (`/app/projetos`).
+✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no banco e redireciona para `MeusProjetosComponent` (`/app/projetos`), exibindo os projetos salvos, status da compra, código de rastreio e linha do tempo de produção (`PedidoEtapa`).
 ✅ **Simulador por Objetos:** A `HomeComponent` agora possui alternância entre os modos **"Por Template"** e **"Pelos Meus Objetos"**, permitindo incrementar/decrementar a quantidade de cada `TipoObjeto` do catálogo, renderizando os rótulos e cores dos objetos dentro dos compartimentos no SVG e exibindo alertas amigáveis quando os objetos não cabem na gaveta.
-✅ **Área Admin (`/admin`):** Criada a `AdminComponent` conectada ao `ApiAdminService` para publicação de novas regras de precificação, aprovação de compras e registro de etapas da esteira de produção (`PedidoEtapa` com código de rastreio e histórico).
+✅ **Área Admin (`/admin`):** Criada a `AdminComponent` conectada ao `ApiAdminService` para publicação de novas regras de precificação, aprovação de compras, registro de etapas da esteira de produção e visualização da **Ficha Técnica / Plano de Corte para Marcenaria**.
 
 ## 4. Próximos Passos (To-Do / Onde Paramos)
-1.  **Visualização do Plano de Corte:** Exibir a lista de peças e medidas de corte para o marceneiro no painel Admin e/ou detalhe do pedido.
-2.  **Acompanhamento de Pedido pelo Cliente:** Mostrar a linha do tempo de etapas de produção (`PedidoEtapa`) na tela `/app/projetos`.
+1.  **Cálculo de Frete / Endereço do Cliente:** Integrar `EstimadorPacote` e formulário de endereço na finalização da compra.
+2.  **Gestão de Catálogo no Admin:** Telas para cadastrar/editar Materiais, Templates e Tipos de Objeto.
 
