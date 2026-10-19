@@ -87,6 +87,32 @@ export interface PreviewLayoutResponse {
   orcamento: OrcamentoPreviewDTO;
 }
 
+export interface CriarProjetoRequest {
+  larguraMm: number;
+  profundidadeMm: number;
+  alturaMm: number;
+  materialId: string;
+  templateId: string;
+  quantidade?: number;
+}
+
+export interface ProjetoSalvoResponse {
+  id: string;
+  compraId: string;
+  larguraMm: number;
+  profundidadeMm: number;
+  alturaMm: number;
+  espessuraMaterialMm: number;
+  margemSegurancaMm: number;
+  quantidade: number;
+  status: string;
+  materialNome: string;
+  templateNome: string;
+  totalCompartimentos: number;
+  valorTotal: number;
+  criadoEm: string;
+}
+
 // Aliases para manter compatibilidade com o componente SVG atual
 export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaMm: number };
 export type LayoutGerado = PreviewLayoutResponse;

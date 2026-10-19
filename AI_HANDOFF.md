@@ -21,14 +21,9 @@ Este repositório contém a aplicação client-side que renderiza o organizador 
 ✅ **Integração Backend:** O formulário possui um `debounceTime(500)` que dispara um POST silencioso para a API Java (`LayoutService.ts`).
 ✅ **Motor Gráfico e Financeiro:** Ao receber a resposta, o painel central atualiza instantaneamente o desenho do SVG com as paredes do organizador, e o painel inferior direito mostra o card dinâmico de **Orçamento** com formatação de moeda (BRL).
 ✅ **Navbar e Auth:** A `<app-navbar>` possui os botões de Login / Logout acoplados ao Keycloak. Ao logar, ela mostra o nome do usuário extraído do JWT e um menu de Admin condicional (baseado nas roles do token).
+✅ **Persistência e Área do Cliente (`/app/projetos`):** `authInterceptor` configurado para injetar o Bearer Token do Keycloak. O botão "Salvar Projeto" na `HomeComponent` salva o projeto no backend e redireciona para `MeusProjetosComponent` (`/app/projetos`).
 
 ## 4. Próximos Passos (To-Do / Onde Paramos)
-O fluxo público está 100% testado. O próximo passo é fechar o laço e permitir salvar a gaveta no banco (fazer a "Compra").
-1.  **Botão "Salvar Projeto":** Ele já existe visualmente na `HomeComponent`, mas falta atrelar um evento de clique.
-2.  **Lógica de Save:**
-    *   Verificar se o usuário está autenticado (`keycloak.authenticated`).
-    *   Se não estiver, forçar login (`keycloak.login()`).
-    *   Se estiver, fazer um POST para `/api/projetos` contendo o payload atual do simulador.
-3.  **Interceptor:** Garantir que o Angular está enviando o `Bearer Token` do Keycloak no header Authorization para rotas que não sejam `/api/public`.
-4.  **Dashboards Restritos:** Criar as rotas lazy-loaded para a "Área do Cliente" (`/app/projetos` - onde ele visualiza pedidos salvos) e a "Área Admin" (`/admin` - CRUD de materiais/templates/esteira de produção).
+1.  **Simulador por Objetos:** Adicionar aba/modo no simulador para o cliente escolher `TipoObjeto` e quantidades (usando o `GeradorLayoutPorObjetos` do backend) além do modo de Templates.
+2.  **Área Admin (`/admin`):** Criar os componentes administrativos para gerenciar o catálogo, regras de precificação e esteira de produção (`PedidoEtapa`).
 

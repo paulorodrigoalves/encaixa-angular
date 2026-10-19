@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, switchMap, takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
@@ -7,6 +8,8 @@ import { GavetaSvgComponent } from '../../../shared/components/gaveta-svg/gaveta
 import { MedidasGaveta, LayoutGerado, CatalogoCompletoDTO } from '../../../core/models/models';
 import { ApiCatalogoService } from '../../../core/services/api-catalogo.service';
 import { ApiLayoutService } from '../../../core/services/api-layout.service';
+import { ApiProjetoService } from '../../../core/services/api-projeto.service';
+import { keycloak } from '../../../core/keycloak/keycloak.config';
 
 @Component({
   selector: 'app-home',
@@ -22,13 +25,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   layout: LayoutGerado | null = null;
   medidasGaveta: MedidasGaveta | null = null;
   isLoading = false;
+  isSaving = false;
+  erroSalvar: string | null = null;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
+    private router: Router,
     private catalogoService: ApiCatalogoService,
-    private layoutService: ApiLayoutService
+    private layoutService: ApiLayoutService,
+    private projetoService: ApiProjetoService
   ) {
     this.form = this.fb.group({
       larguraMm: [600, [Validators.required, Validators.min(50), Validators.max(1200)]],
@@ -78,6 +85,30 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  }
+
+  salvarProjeto(): void {
+    if (this.form.invalid) return;
+
+    if (!keycloak.authenticated) {
+      keycloak.login({ redirectUri: window.location.href });
+      return;
+    }
+
+    this.isSaving = true;
+    this.erroSalvar = null;
+
+    this.projetoService.salvarProjeto(this.form.value).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.router.navigate(['/app/projetos']);
+      },
+      error: (err) => {
+        console.error('Erro ao salvar projeto', err);
+        this.erroSalvar = 'Não foi possível salvar o projeto. Verifique se você está logado.';
+        this.isSaving = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {

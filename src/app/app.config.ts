@@ -8,13 +8,13 @@ registerLocaleData(localePt, 'pt-BR');
 
 import { routes } from './app.routes';
 import { provideKeycloakAngular } from './core/keycloak/keycloak.config';
+import { authInterceptor } from './core/keycloak/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    // TODO: Adicionar interceptor para injetar o Bearer token
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     provideKeycloakAngular
   ]

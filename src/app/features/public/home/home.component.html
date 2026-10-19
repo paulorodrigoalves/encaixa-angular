@@ -97,9 +97,14 @@
                 </div>
               </div>
 
-              <button class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-lg transition-colors">
-                Salvar Projeto
+              <button (click)="salvarProjeto()" [disabled]="isSaving || form.invalid"
+                      class="w-full mt-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors">
+                {{ isSaving ? 'Salvando...' : 'Salvar Projeto' }}
               </button>
+
+              @if (erroSalvar) {
+                <p class="mt-2 text-xs text-red-600 text-center">{{ erroSalvar }}</p>
+              }
             </div>
           }
         </div>
