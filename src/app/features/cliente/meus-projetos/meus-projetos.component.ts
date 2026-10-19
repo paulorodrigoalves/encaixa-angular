@@ -6,15 +6,17 @@ import { ApiProjetoService } from '../../../core/services/api-projeto.service';
 import {
   CotacaoFreteResponse,
   EnderecoDTO,
+  LayoutGerado,
   OpcaoFreteDTO,
   ProjetoSalvoResponse
 } from '../../../core/models/models';
+import { GavetaSvgComponent } from '../../../shared/components/gaveta-svg/gaveta-svg.component';
 import { keycloak } from '../../../core/keycloak/keycloak.config';
 
 @Component({
   selector: 'app-meus-projetos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, GavetaSvgComponent],
   template: `
     <main class="min-h-screen bg-gray-100 p-8 font-sans">
       <div class="max-w-5xl mx-auto space-y-6">
@@ -201,6 +203,21 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
                     </div>
                   </div>
 
+                  <div class="mt-3">
+                    <button (click)="svgVisivel[p.id] = !svgVisivel[p.id]"
+                            class="w-full py-1.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors">
+                      {{ svgVisivel[p.id] ? 'Ocultar Desenho 2D da Gaveta' : 'Visualizar Desenho 2D da Gaveta' }}
+                    </button>
+                    @if (svgVisivel[p.id]) {
+                      <div class="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <app-gaveta-svg
+                          [layout]="montarLayoutParaSvg(p)"
+                          [medidas]="{ larguraMm: p.larguraMm, profundidadeMm: p.profundidadeMm, alturaMm: p.alturaMm }">
+                        </app-gaveta-svg>
+                      </div>
+                    }
+                  </div>
+
                   <!-- Linha do Tempo de Produção -->
                   @if (p.historicoEtapas && p.historicoEtapas.length > 0) {
                     <div class="mt-4 pt-4 border-t border-slate-100">
@@ -256,6 +273,7 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
 export class MeusProjetosComponent implements OnInit {
   projetos: ProjetoSalvoResponse[] = [];
   isLoading = true;
+  svgVisivel: Record<string, boolean> = {};
 
   compraAbertaId: string | null = null;
   cotacao: CotacaoFreteResponse | null = null;
@@ -357,5 +375,22 @@ export class MeusProjetosComponent implements OnInit {
         this.mensagemErro = err?.error?.erro || 'Erro ao fechar compra.';
       }
     });
+  }
+
+  montarLayoutParaSvg(p: ProjetoSalvoResponse): LayoutGerado {
+    return {
+      larguraTotalMm: p.larguraMm - p.margemSegurancaMm,
+      profundidadeTotalMm: p.profundidadeMm - p.margemSegurancaMm,
+      alturaTotalMm: p.alturaMm,
+      divisorias: p.divisorias || [],
+      objetosPosicionados: [],
+      espessuraDivisoriaMm: p.espessuraMaterialMm,
+      orcamento: {
+        valorMaterial: 0,
+        valorDivisorias: 0,
+        valorVolume: 0,
+        valorTotal: p.valorTotal
+      }
+    };
   }
 }

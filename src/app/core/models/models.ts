@@ -126,6 +126,7 @@ export interface ProjetoSalvoResponse {
   codigoRastreio: string | null;
   prazoEstimadoDias: number | null;
   historicoEtapas: EtapaClienteDTO[];
+  divisorias: DivisoriaRenderDTO[];
 }
 
 export interface EnderecoDTO {
