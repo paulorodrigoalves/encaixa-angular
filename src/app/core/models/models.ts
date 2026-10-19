@@ -118,11 +118,55 @@ export interface ProjetoSalvoResponse {
   templateNome: string;
   totalCompartimentos: number;
   valorTotal: number;
+  transportadora: string | null;
+  valorFrete: number;
+  prazoFreteDias: number | null;
   criadoEm: string;
   etapaAtual: string | null;
   codigoRastreio: string | null;
   prazoEstimadoDias: number | null;
   historicoEtapas: EtapaClienteDTO[];
+}
+
+export interface EnderecoDTO {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+}
+
+export interface PacoteEstimadoDTO {
+  larguraCm: number;
+  alturaCm: number;
+  profundidadeCm: number;
+  pesoKg: number;
+}
+
+export interface OpcaoFreteDTO {
+  transportadora: string;
+  valorFrete: number;
+  prazoDias: number;
+}
+
+export interface CotacaoFreteResponse {
+  compraId: string;
+  totalItens: number;
+  subtotalProjetos: number;
+  pacote: PacoteEstimadoDTO;
+  opcoesFrete: OpcaoFreteDTO[];
+  telefoneAtual: string | null;
+  enderecoAtual: EnderecoDTO | null;
+}
+
+export interface FinalizarCheckoutRequest {
+  telefone: string;
+  endereco: EnderecoDTO;
+  transportadora: string;
+  valorFrete: number;
+  prazoFreteDias: number;
 }
 
 export interface RegraPrecificacaoDTO {
