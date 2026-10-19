@@ -97,9 +97,16 @@ export interface CriarProjetoRequest {
   quantidade?: number;
 }
 
+export interface EtapaClienteDTO {
+  nomeEtapa: string;
+  observacao: string | null;
+  criadoEm: string;
+}
+
 export interface ProjetoSalvoResponse {
   id: string;
   compraId: string;
+  statusCompra: string;
   larguraMm: number;
   profundidadeMm: number;
   alturaMm: number;
@@ -112,6 +119,10 @@ export interface ProjetoSalvoResponse {
   totalCompartimentos: number;
   valorTotal: number;
   criadoEm: string;
+  etapaAtual: string | null;
+  codigoRastreio: string | null;
+  prazoEstimadoDias: number | null;
+  historicoEtapas: EtapaClienteDTO[];
 }
 
 export interface RegraPrecificacaoDTO {
