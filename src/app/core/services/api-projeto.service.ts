@@ -5,6 +5,7 @@ import {
   CotacaoFreteResponse,
   CriarProjetoRequest,
   FinalizarCheckoutRequest,
+  PagamentoResponse,
   ProjetoSalvoResponse
 } from '../models/models';
 
@@ -33,5 +34,13 @@ export class ApiProjetoService {
 
   finalizarCheckout(compraId: string, req: FinalizarCheckoutRequest): Observable<void> {
     return this.http.post<void>(`${this.comprasUrl}/${compraId}/checkout`, req);
+  }
+
+  iniciarPagamentoPix(compraId: string): Observable<PagamentoResponse> {
+    return this.http.post<PagamentoResponse>(`//pagamento/pix`, {});
+  }
+
+  consultarPagamento(compraId: string): Observable<PagamentoResponse> {
+    return this.http.get<PagamentoResponse>(`//pagamento`);
   }
 }

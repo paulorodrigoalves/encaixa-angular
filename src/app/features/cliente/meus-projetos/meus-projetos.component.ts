@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -8,6 +8,7 @@ import {
   EnderecoDTO,
   LayoutGerado,
   OpcaoFreteDTO,
+  PagamentoResponse,
   ProjetoSalvoResponse
 } from '../../../core/models/models';
 import { GavetaSvgComponent } from '../../../shared/components/gaveta-svg/gaveta-svg.component';
@@ -40,6 +41,46 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
           <div class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
             {{ mensagemErro }}
           </div>
+        }
+
+        <!-- CARD DE PAGAMENTO PIX (compra fechada aguardando pagamento) -->
+        @if (compraAguardandoPagamentoId) {
+          <section class="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <span class="text-xs font-bold uppercase text-emerald-600">Pagamento</span>
+                <h2 class="text-xl font-bold text-slate-800 mt-1">Pagar com PIX</h2>
+                <p class="text-sm text-slate-500">Total da compra: <strong>{{ totalAguardandoPagamento | currency:'BRL' }}</strong></p>
+              </div>
+              @if (!pagamento) {
+                <button (click)="pagarComPix()" [disabled]="gerandoPix"
+                        class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                  {{ gerandoPix ? 'Gerando PIX...' : 'Gerar QR Code PIX' }}
+                </button>
+              }
+            </div>
+
+            @if (pagamento) {
+              <div class="grid md:grid-cols-[200px_1fr] gap-6 items-center">
+                @if (pagamento.pixQrBase64) {
+                  <img [src]="'data:image/png;base64,' + pagamento.pixQrBase64" alt="QR Code PIX"
+                       class="w-48 h-48 border border-slate-200 rounded-xl" />
+                }
+                <div class="space-y-3">
+                  <p class="text-sm text-slate-600">Escaneie o QR Code no app do seu banco ou use o PIX copia e cola:</p>
+                  @if (pagamento.pixCopiaCola) {
+                    <textarea readonly rows="3" [value]="pagamento.pixCopiaCola"
+                              class="w-full p-2 text-xs font-mono border border-slate-300 rounded-lg bg-slate-50"></textarea>
+                    <button (click)="copiarPix()"
+                            class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                      {{ pixCopiado ? 'Copiado!' : 'Copiar código PIX' }}
+                    </button>
+                  }
+                  <p class="text-xs text-slate-400">Aguardando confirmação do pagamento... esta tela atualiza sozinha.</p>
+                </div>
+              </div>
+            }
+          </section>
         }
 
         <!-- CARD DE CHECKOUT / FRETE PARA CARRINHO EM ABERTO -->
@@ -270,7 +311,7 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
     </main>
   `
 })
-export class MeusProjetosComponent implements OnInit {
+export class MeusProjetosComponent implements OnInit, OnDestroy {
   projetos: ProjetoSalvoResponse[] = [];
   isLoading = true;
   svgVisivel: Record<string, boolean> = {};
@@ -290,6 +331,13 @@ export class MeusProjetosComponent implements OnInit {
     estado: 'SP'
   };
 
+  compraAguardandoPagamentoId: string | null = null;
+  totalAguardandoPagamento = 0;
+  pagamento: PagamentoResponse | null = null;
+  gerandoPix = false;
+  pixCopiado = false;
+  private pollingPagamento: ReturnType<typeof setInterval> | null = null;
+
   finalizandoCheckout = false;
   mensagemSucesso: string | null = null;
   mensagemErro: string | null = null;
@@ -304,11 +352,85 @@ export class MeusProjetosComponent implements OnInit {
     this.carregarProjetos();
   }
 
+  ngOnDestroy(): void {
+    this.pararPolling();
+  }
+
+  private atualizarPagamentoPendente(lista: ProjetoSalvoResponse[]): void {
+    const aguardando = lista.find(p => p.compraId && p.transportadora && p.statusCompra === 'FECHADA');
+    if (!aguardando) {
+      this.compraAguardandoPagamentoId = null;
+      this.pagamento = null;
+      this.pararPolling();
+      return;
+    }
+    const mesmaCompra = lista.filter(p => p.compraId === aguardando.compraId);
+    this.compraAguardandoPagamentoId = aguardando.compraId;
+    this.totalAguardandoPagamento =
+      mesmaCompra.reduce((s, p) => s + p.valorTotal * p.quantidade, 0) + (aguardando.valorFrete || 0);
+  }
+
+  pagarComPix(): void {
+    if (!this.compraAguardandoPagamentoId) return;
+    this.gerandoPix = true;
+    this.mensagemErro = null;
+    this.projetoService.iniciarPagamentoPix(this.compraAguardandoPagamentoId).subscribe({
+      next: (pg) => {
+        this.gerandoPix = false;
+        this.pagamento = pg;
+        this.iniciarPolling();
+      },
+      error: (err) => {
+        this.gerandoPix = false;
+        this.mensagemErro = err?.error?.erro || 'Não foi possível gerar o PIX.';
+      }
+    });
+  }
+
+  copiarPix(): void {
+    if (!this.pagamento?.pixCopiaCola) return;
+    navigator.clipboard.writeText(this.pagamento.pixCopiaCola).then(() => {
+      this.pixCopiado = true;
+      setTimeout(() => (this.pixCopiado = false), 2000);
+    });
+  }
+
+  private iniciarPolling(): void {
+    this.pararPolling();
+    this.pollingPagamento = setInterval(() => {
+      if (!this.compraAguardandoPagamentoId) return;
+      this.projetoService.consultarPagamento(this.compraAguardandoPagamentoId).subscribe({
+        next: (pg) => {
+          this.pagamento = pg;
+          if (pg.status === 'APROVADO') {
+            this.pararPolling();
+            this.mensagemSucesso = 'Pagamento confirmado! Seu pedido entrou em produção.';
+            this.pagamento = null;
+            this.carregarProjetos();
+          } else if (pg.status !== 'PENDENTE') {
+            this.pararPolling();
+            this.pagamento = null;
+            this.mensagemErro = 'O pagamento não foi concluído. Gere um novo PIX para tentar novamente.';
+          }
+        },
+        error: () => {}
+      });
+    }, 5000);
+  }
+
+  private pararPolling(): void {
+    if (this.pollingPagamento) {
+      clearInterval(this.pollingPagamento);
+      this.pollingPagamento = null;
+    }
+  }
+
   carregarProjetos(): void {
     this.isLoading = true;
     this.projetoService.listarMeusProjetos().subscribe({
       next: (lista) => {
         this.projetos = lista;
+        this.atualizarPagamentoPendente(lista);
         this.isLoading = false;
 
         // Verifica se existe uma compra ainda sem transportadora definida (carrinho aberto)

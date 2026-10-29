@@ -287,3 +287,13 @@ export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaM
 export type LayoutGerado = PreviewLayoutResponse;
 export type DivisoriaRender = DivisoriaRenderDTO;
 export type ObjetoPosicionado = ObjetoPosicionadoDTO;
+
+export interface PagamentoResponse {
+  pagamentoId: string;
+  compraId: string;
+  status: 'PENDENTE' | 'APROVADO' | 'REJEITADO' | 'CANCELADO' | 'ESTORNADO';
+  valor: number;
+  pixCopiaCola: string | null;
+  pixQrBase64: string | null;
+  ticketUrl: string | null;
+}
