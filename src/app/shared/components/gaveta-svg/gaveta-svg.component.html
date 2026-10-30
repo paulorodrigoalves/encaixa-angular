@@ -49,7 +49,7 @@
           @if (item.larguraRealMm >= 40 && item.profundidadeRealMm >= 25) {
             <text
               [attr.x]="item.xMm + (item.larguraRealMm / 2)"
-              [attr.y]="item.yMm + (item.profundidadeRealMm / 2)"
+              [attr.y]="item.yMm + (item.profundidadeRealMm / 2) - (item.girado ? 6 : 0)"
               text-anchor="middle"
               dominant-baseline="middle"
               fill="#334155"
@@ -59,6 +59,19 @@
             >
               {{ item.objeto.nome }}
             </text>
+            @if (item.girado) {
+              <text
+                [attr.x]="item.xMm + (item.larguraRealMm / 2)"
+                [attr.y]="item.yMm + (item.profundidadeRealMm / 2) + 8"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                fill="#64748b"
+                font-size="9"
+                font-family="system-ui"
+              >
+                (girado 90°)
+              </text>
+            }
           }
         </g>
       }

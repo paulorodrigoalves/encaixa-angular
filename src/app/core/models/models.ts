@@ -46,6 +46,7 @@ export interface PreviewLayoutRequest {
   materialId: string;
   templateId?: string;
   itensObjeto?: ItemObjetoSelecionado[];
+  estrategiaLayout?: string;
 }
 
 export interface DivisoriaRenderDTO {
@@ -68,6 +69,9 @@ export interface ObjetoPosicionadoDTO {
   yMm: number;
   larguraRealMm: number;
   profundidadeRealMm: number;
+  girado?: boolean;
+  folgaLarguraMm?: number;
+  folgaProfundidadeMm?: number;
 }
 
 export interface OrcamentoPreviewDTO {
@@ -75,6 +79,23 @@ export interface OrcamentoPreviewDTO {
   valorDivisorias: number;
   valorVolume: number;
   valorTotal: number;
+}
+
+export interface AlternativaLayoutDTO {
+  id: string;
+  rotulo: string;
+}
+
+export interface CamadaSugeridaDTO {
+  alturaMm: number;
+  itens: ItemObjetoSelecionado[];
+}
+
+export interface LayoutNaoCabeErro {
+  erro: string;
+  larguraMinimaSugeridaMm?: number | null;
+  profundidadeMinimaSugeridaMm?: number | null;
+  camadas?: CamadaSugeridaDTO[];
 }
 
 export interface PreviewLayoutResponse {
@@ -85,6 +106,8 @@ export interface PreviewLayoutResponse {
   objetosPosicionados: ObjetoPosicionadoDTO[];
   espessuraDivisoriaMm: number;
   orcamento: OrcamentoPreviewDTO;
+  estrategiaUsada?: string;
+  alternativas?: AlternativaLayoutDTO[];
 }
 
 export interface CriarProjetoRequest {
@@ -95,6 +118,7 @@ export interface CriarProjetoRequest {
   templateId?: string;
   itensObjeto?: ItemObjetoSelecionado[];
   quantidade?: number;
+  estrategiaLayout?: string;
 }
 
 export interface EtapaClienteDTO {

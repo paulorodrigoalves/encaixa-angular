@@ -10,6 +10,7 @@ import {
   LayoutGerado,
   CatalogoCompletoDTO,
   ItemObjetoSelecionado,
+  LayoutNaoCabeErro,
   PreviewLayoutRequest
 } from '../../../core/models/models';
 import { ApiCatalogoService } from '../../../core/services/api-catalogo.service';
@@ -37,7 +38,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   erroLayout: string | null = null;
+  erroNaoCabe: LayoutNaoCabeErro | null = null;
   erroSalvar: string | null = null;
+  estrategiaSelecionada = 'AUTO';
 
   private triggerPreview$ = new Subject<void>();
   private destroy$ = new Subject<void>();
@@ -96,6 +99,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
           this.isLoading = true;
           this.erroLayout = null;
+          this.erroNaoCabe = null;
           this.medidasGaveta = {
             larguraMm: payload.larguraMm,
             profundidadeMm: payload.profundidadeMm,
@@ -107,6 +111,9 @@ export class HomeComponent implements OnInit, OnDestroy {
               this.isLoading = false;
               this.layout = null;
               this.erroLayout = err?.error?.erro || 'Medidas incompatíveis com o layout selecionado.';
+              this.erroNaoCabe = err?.error && (err.error.larguraMinimaSugeridaMm || err.error.profundidadeMinimaSugeridaMm || err.error.camadas?.length)
+                ? err.error
+                : null;
               return of(null);
             })
           );
@@ -123,8 +130,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   alternarModo(novoModo: 'TEMPLATE' | 'OBJETOS'): void {
     if (this.modoOrigem === novoModo) return;
     this.modoOrigem = novoModo;
+    this.estrategiaSelecionada = 'AUTO';
     this.erroLayout = null;
+    this.erroNaoCabe = null;
     this.triggerPreview$.next();
+  }
+
+  selecionarEstrategia(est: string): void {
+    if (this.estrategiaSelecionada === est) return;
+    this.estrategiaSelecionada = est;
+    this.triggerPreview$.next();
+  }
+
+  aplicarMedidasSugeridas(): void {
+    if (!this.erroNaoCabe) return;
+    const patch: Record<string, number> = {};
+    if (this.erroNaoCabe.larguraMinimaSugeridaMm) {
+      patch['larguraMm'] = this.erroNaoCabe.larguraMinimaSugeridaMm;
+    }
+    if (this.erroNaoCabe.profundidadeMinimaSugeridaMm) {
+      patch['profundidadeMm'] = this.erroNaoCabe.profundidadeMinimaSugeridaMm;
+    }
+    this.form.patchValue(patch);
   }
 
   obterQuantidade(tipoId: string): number {
@@ -170,7 +197,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         profundidadeMm: v.profundidadeMm,
         alturaMm: v.alturaMm,
         materialId: v.materialId,
-        itensObjeto: itens
+        itensObjeto: itens,
+        estrategiaLayout: this.estrategiaSelecionada
       };
     }
   }

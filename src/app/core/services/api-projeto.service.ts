@@ -37,10 +37,10 @@ export class ApiProjetoService {
   }
 
   iniciarPagamentoPix(compraId: string): Observable<PagamentoResponse> {
-    return this.http.post<PagamentoResponse>(`//pagamento/pix`, {});
+    return this.http.post<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento/pix`, {});
   }
 
   consultarPagamento(compraId: string): Observable<PagamentoResponse> {
-    return this.http.get<PagamentoResponse>(`//pagamento`);
+    return this.http.get<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento`);
   }
 }
