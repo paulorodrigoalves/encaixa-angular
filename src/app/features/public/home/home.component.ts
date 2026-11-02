@@ -11,6 +11,7 @@ import {
   CatalogoCompletoDTO,
   ItemObjetoSelecionado,
   LayoutNaoCabeErro,
+  MaterialDTO,
   PreviewLayoutRequest
 } from '../../../core/models/models';
 import { ApiCatalogoService } from '../../../core/services/api-catalogo.service';
@@ -41,6 +42,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   erroNaoCabe: LayoutNaoCabeErro | null = null;
   erroSalvar: string | null = null;
   estrategiaSelecionada = 'AUTO';
+  fotoModalAberta = false;
+
+  get materialSelecionado(): MaterialDTO | null {
+    const id = this.form?.get('materialId')?.value;
+    return this.catalogo?.materiais.find((m) => m.id === id) || null;
+  }
+
+  abrirFotoModal(): void {
+    if (this.materialSelecionado?.fotoUrl) {
+      this.fotoModalAberta = true;
+    }
+  }
+
+  fecharFotoModal(): void {
+    this.fotoModalAberta = false;
+  }
 
   private triggerPreview$ = new Subject<void>();
   private destroy$ = new Subject<void>();

@@ -389,35 +389,68 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
             <h2 class="text-xl font-bold text-slate-800 border-b border-slate-100 pb-3">
               2. Materiais & Revestimentos ({{ catalogoAdmin.materiais.length }})
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Nome Comercial</label>
-                <input type="text" [(ngModel)]="novoMaterial.nome" placeholder="Ex: Veludo Cinza Chumbo"
-                       class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+            <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome Comercial</label>
+                  <input type="text" [(ngModel)]="novoMaterial.nome" placeholder="Ex: Veludo Cinza Chumbo"
+                         class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Cor</label>
+                  <input type="text" [(ngModel)]="novoMaterial.cor" placeholder="Ex: Cinza Chumbo"
+                         class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Adicional Fixo (R$)</label>
+                  <input type="number" step="0.01" [(ngModel)]="novoMaterial.valorFixoAdicional"
+                         class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Tipo Material Base</label>
+                  <select [(ngModel)]="novoMaterial.tipoMaterialId"
+                          class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white">
+                    @for (tm of catalogoAdmin.tiposMaterial; track tm.id) {
+                      <option [value]="tm.id">{{ tm.nome }} ({{ tm.espessuraMm }}mm)</option>
+                    }
+                  </select>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Cor</label>
-                <input type="text" [(ngModel)]="novoMaterial.cor" placeholder="Ex: Cinza Chumbo"
-                       class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+
+              <!-- Foto Ilustrativa e Ação -->
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-center pt-2 border-t border-slate-200">
+                <div class="md:col-span-3 flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-lg border border-slate-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                    @if (novoMaterial.fotoUrl) {
+                      <img [src]="novoMaterial.fotoUrl" alt="Prévia" class="w-full h-full object-cover" />
+                    } @else {
+                      <span class="text-[10px] text-slate-400 text-center leading-tight">Sem<br>foto</span>
+                    }
+                  </div>
+                  <div class="flex-1 space-y-1">
+                    <label class="block text-xs font-medium text-slate-600">Foto Ilustrativa do Organizador (URL ou Upload)</label>
+                    <div class="flex gap-2">
+                      <input type="text" [(ngModel)]="novoMaterial.fotoUrl" placeholder="https://... ou anexe arquivo"
+                             class="flex-1 p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+                      <label class="cursor-pointer bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0">
+                        📁 Anexar
+                        <input type="file" accept="image/*" (change)="aoSelecionarFotoNovo($event)" class="hidden" />
+                      </label>
+                      @if (novoMaterial.fotoUrl) {
+                        <button (click)="novoMaterial.fotoUrl = ''" type="button" class="text-xs text-rose-600 hover:text-rose-800 px-2">
+                          Limpar
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <button (click)="criarMaterial()"
+                          class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2.5 px-4 rounded-lg text-xs font-semibold">
+                    + Cadastrar Material
+                  </button>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Adicional Fixo (R$)</label>
-                <input type="number" step="0.01" [(ngModel)]="novoMaterial.valorFixoAdicional"
-                       class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Tipo Material Base</label>
-                <select [(ngModel)]="novoMaterial.tipoMaterialId"
-                        class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white">
-                  @for (tm of catalogoAdmin.tiposMaterial; track tm.id) {
-                    <option [value]="tm.id">{{ tm.nome }} ({{ tm.espessuraMm }}mm)</option>
-                  }
-                </select>
-              </div>
-              <button (click)="criarMaterial()"
-                      class="bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded-lg text-xs font-semibold">
-                + Cadastrar Material
-              </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -471,6 +504,31 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                           </select>
                         </div>
                       </div>
+                      <div class="space-y-1">
+                        <label class="block text-[11px] font-medium text-slate-600">Foto Ilustrativa do Organizador</label>
+                        <div class="flex items-center gap-2">
+                          <div class="w-12 h-12 rounded-lg border border-slate-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                            @if (formEditMaterial.fotoUrl) {
+                              <img [src]="formEditMaterial.fotoUrl" alt="Foto" class="w-full h-full object-cover" />
+                            } @else {
+                              <span class="text-[10px] text-slate-400 text-center leading-tight">Sem<br>foto</span>
+                            }
+                          </div>
+                          <div class="flex-1 flex gap-2">
+                            <input type="text" [(ngModel)]="formEditMaterial.fotoUrl" placeholder="URL da foto ou anexe arquivo"
+                                   class="flex-1 p-1.5 text-xs border border-slate-300 rounded-lg" />
+                            <label class="cursor-pointer bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0">
+                              📁 Anexar
+                              <input type="file" accept="image/*" (change)="aoSelecionarFotoEdit($event)" class="hidden" />
+                            </label>
+                            @if (formEditMaterial.fotoUrl) {
+                              <button (click)="formEditMaterial.fotoUrl = ''" type="button" class="text-xs text-rose-600 hover:text-rose-800 px-1">
+                                Limpar
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
                       <div class="flex justify-end gap-2 pt-1">
                         <button (click)="cancelarEdicaoMaterial()" class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200">
                           Cancelar
@@ -481,8 +539,16 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                       </div>
                     </div>
                   } @else {
-                    <div class="flex justify-between items-start gap-2">
-                      <div>
+                    <div class="flex justify-between items-start gap-3">
+                      <div class="flex items-start gap-3">
+                        <div class="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-inner">
+                          @if (m.fotoUrl) {
+                            <img [src]="m.fotoUrl" [alt]="m.nome" class="w-full h-full object-cover" />
+                          } @else {
+                            <span class="text-[10px] text-slate-400 text-center leading-tight">Sem<br>foto</span>
+                          }
+                        </div>
+                        <div>
                         <div class="flex items-center gap-2 flex-wrap">
                           <span class="text-sm font-bold text-slate-800">{{ m.nome }}</span>
                           <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
@@ -503,7 +569,8 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                           Adicional Fixo: {{ m.valorFixoAdicional | currency:'BRL' }}
                         </p>
                       </div>
-                      <div class="flex flex-col gap-1 shrink-0">
+                    </div>
+                    <div class="flex flex-col gap-1 shrink-0">
                         <button (click)="iniciarEdicaoMaterial(m)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
                           Editar
                         </button>
@@ -659,7 +726,7 @@ export class AdminComponent implements OnInit {
   catalogoAdmin: CatalogoAdminDTO | null = null;
 
   novoTipoMat = { nome: '', espessuraMm: 8, margemMm: 4 };
-  novoMaterial = { nome: '', cor: '', valorFixoAdicional: 25, tipoMaterialId: '' };
+  novoMaterial = { nome: '', cor: '', valorFixoAdicional: 25, tipoMaterialId: '', fotoUrl: '' };
   novoObjeto = {
     nome: '',
     categoria: 'Closet',
@@ -676,7 +743,7 @@ export class AdminComponent implements OnInit {
 
   // Estado de edição - Material
   editandoMaterialId: string | null = null;
-  formEditMaterial = { nome: '', cor: '', valorFixoAdicional: 0, tipoMaterialId: '' };
+  formEditMaterial = { nome: '', cor: '', valorFixoAdicional: 0, tipoMaterialId: '', fotoUrl: '' };
 
   // Estado de edição - Tipo de Objeto
   editandoObjetoId: string | null = null;
@@ -819,6 +886,30 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  aoSelecionarFotoNovo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.novoMaterial.fotoUrl = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  aoSelecionarFotoEdit(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.formEditMaterial.fotoUrl = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   criarMaterial(): void {
     if (!this.novoMaterial.nome.trim() || !this.novoMaterial.tipoMaterialId) return;
     this.limparMensagens();
@@ -826,6 +917,7 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.novoMaterial.nome = '';
         this.novoMaterial.cor = '';
+        this.novoMaterial.fotoUrl = '';
         this.mensagemFeedback = 'Material/Revestimento cadastrado com sucesso!';
         this.carregarCatalogoAdmin();
       },
@@ -839,7 +931,8 @@ export class AdminComponent implements OnInit {
       nome: m.nome,
       cor: m.cor,
       valorFixoAdicional: m.valorFixoAdicional,
-      tipoMaterialId: m.tipoMaterialId
+      tipoMaterialId: m.tipoMaterialId,
+      fotoUrl: m.fotoUrl || ''
     };
   }
 

@@ -7,6 +7,7 @@ import {
   AtualizarTipoObjetoRequest,
   CatalogoAdminDTO,
   CompraAdminDTO,
+  CriarMaterialRequest,
   EtapaProducaoDTO,
   PlanoCorteProjetoDTO,
   RegistrarEtapaRequest,
@@ -68,7 +69,7 @@ export class ApiAdminService {
     return this.http.patch<void>(`${this.baseUrl}/catalogo/tipos-material/${id}/toggle-ativo`, {});
   }
 
-  criarMaterial(req: { nome: string; cor: string; valorFixoAdicional: number; tipoMaterialId: string }): Observable<void> {
+  criarMaterial(req: CriarMaterialRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/catalogo/materiais`, req);
   }
 

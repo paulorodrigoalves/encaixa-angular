@@ -7,6 +7,7 @@ export interface MaterialDTO {
   tipoMaterialNome: string;
   espessuraMm: number;
   margemMm: number;
+  fotoUrl?: string | null;
 }
 
 export interface TemplateDTO {
@@ -288,6 +289,7 @@ export interface MaterialAdminDTO {
   margemMm: number;
   ativo: boolean;
   pedidosEmProducao: number;
+  fotoUrl?: string | null;
 }
 
 export interface TipoObjetoAdminDTO {
@@ -308,6 +310,14 @@ export interface CatalogoAdminDTO {
   tiposObjeto: TipoObjetoAdminDTO[];
 }
 
+export interface CriarMaterialRequest {
+  nome: string;
+  cor: string;
+  valorFixoAdicional: number;
+  tipoMaterialId: string;
+  fotoUrl?: string | null;
+}
+
 export interface AtualizarTipoMaterialRequest {
   nome: string;
   espessuraMm: number;
@@ -319,6 +329,7 @@ export interface AtualizarMaterialRequest {
   cor: string;
   valorFixoAdicional: number;
   tipoMaterialId: string;
+  fotoUrl?: string | null;
 }
 
 export interface AtualizarTipoObjetoRequest {
