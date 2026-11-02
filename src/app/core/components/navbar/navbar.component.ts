@@ -28,14 +28,18 @@ import { keycloak } from '../../keycloak/keycloak.config';
             </ng-container>
 
             <ng-container *ngIf="isLoggedIn">
-              <a routerLink="/app/projetos" class="text-slate-600 hover:text-slate-900 font-medium px-3 py-2 rounded-md text-sm transition-colors">
+              <a *ngIf="!isAdmin" routerLink="/app/projetos" class="text-slate-600 hover:text-slate-900 font-medium px-3 py-2 rounded-md text-sm transition-colors">
                 Meus Projetos
               </a>
-              <a *ngIf="isAdmin" routerLink="/admin" class="text-indigo-600 hover:text-indigo-900 font-medium px-3 py-2 rounded-md text-sm transition-colors">
-                Admin
+              <a *ngIf="isAdmin" routerLink="/admin" class="text-indigo-600 hover:text-indigo-900 font-semibold px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-1.5">
+                Painel Admin
+              </a>
+              <a *ngIf="isAdmin" routerLink="/app/projetos" class="text-slate-400 hover:text-slate-700 text-xs px-2 py-1 transition-colors">
+                Visão Cliente
               </a>
               <div class="ml-4 pl-4 border-l border-gray-200 flex items-center space-x-3">
                 <span class="text-sm font-medium text-slate-700">{{ username }}</span>
+                <span *ngIf="isAdmin" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-800 tracking-wider">ADMIN</span>
                 <button (click)="logout()" class="text-red-600 hover:text-red-800 text-sm font-medium px-2 transition-colors">
                   Sair
                 </button>
@@ -67,7 +71,7 @@ export class NavbarComponent implements OnInit {
   }
 
   login() {
-    keycloak.login({ redirectUri: window.location.origin + '/app/projetos' });
+    keycloak.login({ redirectUri: window.location.origin + '/auth/post-login' });
   }
 
   logout() {
