@@ -308,18 +308,36 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                         <span class="text-xs font-bold text-indigo-700 uppercase">Editar Tipo de Material</span>
                         <span class="text-[10px] text-slate-400">ID: {{ tm.id.substring(0, 8) }}...</span>
                       </div>
+                      @if (tm.pedidosEmProducao > 0) {
+                        <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-xs space-y-0.5">
+                          <p class="font-bold flex items-center gap-1">
+                            <span>⚠️</span> Bloqueio de Segurança Operacional
+                          </p>
+                          <p class="text-[11px] text-amber-800">
+                            Existem <strong>{{ tm.pedidosEmProducao }} pedido(s)</strong> em andamento na produção utilizando este tipo base. Espessura e margem estão travadas para proteger o corte físico das peças.
+                          </p>
+                        </div>
+                      }
                       <div>
                         <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome</label>
                         <input type="text" [(ngModel)]="formEditTipoMat.nome" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
                       </div>
                       <div class="grid grid-cols-2 gap-2">
                         <div>
-                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Espessura (mm)</label>
-                          <input type="number" [(ngModel)]="formEditTipoMat.espessuraMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">
+                            Espessura (mm)
+                            @if (tm.pedidosEmProducao > 0) { <span class="text-amber-700 font-bold">(Travado)</span> }
+                          </label>
+                          <input type="number" [(ngModel)]="formEditTipoMat.espessuraMm" [disabled]="tm.pedidosEmProducao > 0"
+                                 class="w-full p-1.5 text-xs border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500" />
                         </div>
                         <div>
-                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Margem (mm)</label>
-                          <input type="number" [(ngModel)]="formEditTipoMat.margemMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">
+                            Margem (mm)
+                            @if (tm.pedidosEmProducao > 0) { <span class="text-amber-700 font-bold">(Travado)</span> }
+                          </label>
+                          <input type="number" [(ngModel)]="formEditTipoMat.margemMm" [disabled]="tm.pedidosEmProducao > 0"
+                                 class="w-full p-1.5 text-xs border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500" />
                         </div>
                       </div>
                       <div class="flex justify-end gap-2 pt-1">
@@ -334,12 +352,18 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                   } @else {
                     <div class="flex justify-between items-start gap-2">
                       <div>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                           <p class="text-sm font-bold text-slate-800">{{ tm.nome }}</p>
                           <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                                 [ngClass]="tm.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
                             {{ tm.ativo ? 'Ativo' : 'Inativo' }}
                           </span>
+                          @if (tm.pedidosEmProducao > 0) {
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800"
+                                  title="Pedidos em andamento na marcenaria">
+                              📦 {{ tm.pedidosEmProducao }} em corte/produção
+                            </span>
+                          }
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
                           Espessura: <strong>{{ tm.espessuraMm }} mm</strong> · Margem: <strong>{{ tm.margemMm }} mm</strong>
@@ -405,14 +429,28 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                         <span class="text-xs font-bold text-indigo-700 uppercase">Editar Material / Revestimento</span>
                         <span class="text-[10px] text-slate-400">ID: {{ m.id.substring(0, 8) }}...</span>
                       </div>
+                      @if (m.pedidosEmProducao > 0) {
+                        <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-xs space-y-0.5">
+                          <p class="font-bold flex items-center gap-1">
+                            <span>⚠️</span> Bloqueio de Segurança Operacional
+                          </p>
+                          <p class="text-[11px] text-amber-800">
+                            Existem <strong>{{ m.pedidosEmProducao }} pedido(s)</strong> em andamento na marcenaria com este revestimento. A cor e o tipo base estão travados para evitar peças produzidas no tom incorreto.
+                          </p>
+                        </div>
+                      }
                       <div class="grid grid-cols-2 gap-2">
                         <div>
                           <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome Comercial</label>
                           <input type="text" [(ngModel)]="formEditMaterial.nome" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
                         </div>
                         <div>
-                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Cor</label>
-                          <input type="text" [(ngModel)]="formEditMaterial.cor" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">
+                            Cor
+                            @if (m.pedidosEmProducao > 0) { <span class="text-amber-700 font-bold">(Travado)</span> }
+                          </label>
+                          <input type="text" [(ngModel)]="formEditMaterial.cor" [disabled]="m.pedidosEmProducao > 0"
+                                 class="w-full p-1.5 text-xs border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500" />
                         </div>
                       </div>
                       <div class="grid grid-cols-2 gap-2">
@@ -421,8 +459,12 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                           <input type="number" step="0.01" [(ngModel)]="formEditMaterial.valorFixoAdicional" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
                         </div>
                         <div>
-                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Tipo Material Base</label>
-                          <select [(ngModel)]="formEditMaterial.tipoMaterialId" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg bg-white">
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">
+                            Tipo Material Base
+                            @if (m.pedidosEmProducao > 0) { <span class="text-amber-700 font-bold">(Travado)</span> }
+                          </label>
+                          <select [(ngModel)]="formEditMaterial.tipoMaterialId" [disabled]="m.pedidosEmProducao > 0"
+                                  class="w-full p-1.5 text-xs border border-slate-300 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500">
                             @for (tm of catalogoAdmin.tiposMaterial; track tm.id) {
                               <option [value]="tm.id">{{ tm.nome }} ({{ tm.espessuraMm }}mm)</option>
                             }
@@ -441,12 +483,18 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                   } @else {
                     <div class="flex justify-between items-start gap-2">
                       <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                           <span class="text-sm font-bold text-slate-800">{{ m.nome }}</span>
                           <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                                 [ngClass]="m.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
                             {{ m.ativo ? 'Ativo' : 'Inativo' }}
                           </span>
+                          @if (m.pedidosEmProducao > 0) {
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800"
+                                  title="Pedidos em andamento na marcenaria">
+                              📦 {{ m.pedidosEmProducao }} em corte/produção
+                            </span>
+                          }
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
                           Cor: <strong>{{ m.cor }}</strong> · Base: <strong>{{ m.tipoMaterialNome }}</strong> ({{ m.espessuraMm }}mm / folga {{ m.margemMm }}mm)

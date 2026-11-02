@@ -274,6 +274,7 @@ export interface TipoMaterialAdminDTO {
   espessuraMm: number;
   margemMm: number;
   ativo: boolean;
+  pedidosEmProducao: number;
 }
 
 export interface MaterialAdminDTO {
@@ -286,6 +287,7 @@ export interface MaterialAdminDTO {
   espessuraMm: number;
   margemMm: number;
   ativo: boolean;
+  pedidosEmProducao: number;
 }
 
 export interface TipoObjetoAdminDTO {
