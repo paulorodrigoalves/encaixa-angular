@@ -6,8 +6,11 @@ import {
   CatalogoAdminDTO,
   CompraAdminDTO,
   EtapaProducaoDTO,
+  MaterialAdminDTO,
   PlanoCorteProjetoDTO,
-  RegraPrecificacaoDTO
+  RegraPrecificacaoDTO,
+  TipoMaterialAdminDTO,
+  TipoObjetoAdminDTO
 } from '../../core/models/models';
 import { keycloak } from '../../core/keycloak/keycloak.config';
 
@@ -298,11 +301,60 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               @for (tm of catalogoAdmin.tiposMaterial; track tm.id) {
-                <div class="p-3 rounded-xl border border-slate-200 flex justify-between items-center">
-                  <div>
-                    <p class="text-sm font-bold text-slate-800">{{ tm.nome }}</p>
-                    <p class="text-xs text-slate-500">Espessura: {{ tm.espessuraMm }}mm · Margem: {{ tm.margemMm }}mm</p>
-                  </div>
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                  @if (editandoTipoMatId === tm.id) {
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-700 uppercase">Editar Tipo de Material</span>
+                        <span class="text-[10px] text-slate-400">ID: {{ tm.id.substring(0, 8) }}...</span>
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome</label>
+                        <input type="text" [(ngModel)]="formEditTipoMat.nome" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Espessura (mm)</label>
+                          <input type="number" [(ngModel)]="formEditTipoMat.espessuraMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Margem (mm)</label>
+                          <input type="number" [(ngModel)]="formEditTipoMat.margemMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                      </div>
+                      <div class="flex justify-end gap-2 pt-1">
+                        <button (click)="cancelarEdicaoTipoMat()" class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200">
+                          Cancelar
+                        </button>
+                        <button (click)="salvarEdicaoTipoMat(tm.id)" class="px-3 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="flex justify-between items-start gap-2">
+                      <div>
+                        <div class="flex items-center gap-1.5">
+                          <p class="text-sm font-bold text-slate-800">{{ tm.nome }}</p>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                [ngClass]="tm.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                            {{ tm.ativo ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                          Espessura: <strong>{{ tm.espessuraMm }} mm</strong> · Margem: <strong>{{ tm.margemMm }} mm</strong>
+                        </p>
+                      </div>
+                      <div class="flex flex-col gap-1 shrink-0">
+                        <button (click)="iniciarEdicaoTipoMat(tm)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                          Editar
+                        </button>
+                        <button (click)="toggleTipoMaterial(tm.id)" class="text-[11px] font-medium px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50">
+                          {{ tm.ativo ? 'Desativar' : 'Ativar' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -346,23 +398,73 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               @for (m of catalogoAdmin.materiais; track m.id) {
-                <div class="p-3 rounded-xl border border-slate-200 flex justify-between items-center">
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-bold text-slate-800">{{ m.nome }}</span>
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                            [ngClass]="m.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
-                        {{ m.ativo ? 'Ativo' : 'Inativo' }}
-                      </span>
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                  @if (editandoMaterialId === m.id) {
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-700 uppercase">Editar Material / Revestimento</span>
+                        <span class="text-[10px] text-slate-400">ID: {{ m.id.substring(0, 8) }}...</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome Comercial</label>
+                          <input type="text" [(ngModel)]="formEditMaterial.nome" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Cor</label>
+                          <input type="text" [(ngModel)]="formEditMaterial.cor" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Adicional Fixo (R$)</label>
+                          <input type="number" step="0.01" [(ngModel)]="formEditMaterial.valorFixoAdicional" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Tipo Material Base</label>
+                          <select [(ngModel)]="formEditMaterial.tipoMaterialId" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg bg-white">
+                            @for (tm of catalogoAdmin.tiposMaterial; track tm.id) {
+                              <option [value]="tm.id">{{ tm.nome }} ({{ tm.espessuraMm }}mm)</option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                      <div class="flex justify-end gap-2 pt-1">
+                        <button (click)="cancelarEdicaoMaterial()" class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200">
+                          Cancelar
+                        </button>
+                        <button (click)="salvarEdicaoMaterial(m.id)" class="px-3 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                          Salvar
+                        </button>
+                      </div>
                     </div>
-                    <p class="text-xs text-slate-500">
-                      {{ m.tipoMaterialNome }} ({{ m.espessuraMm }}mm / folga {{ m.margemMm }}mm) · Adicional: {{ m.valorFixoAdicional | currency:'BRL' }}
-                    </p>
-                  </div>
-                  <button (click)="toggleMaterial(m.id)"
-                          class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700">
-                    {{ m.ativo ? 'Desativar' : 'Ativar' }}
-                  </button>
+                  } @else {
+                    <div class="flex justify-between items-start gap-2">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-bold text-slate-800">{{ m.nome }}</span>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                [ngClass]="m.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                            {{ m.ativo ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                          Cor: <strong>{{ m.cor }}</strong> · Base: <strong>{{ m.tipoMaterialNome }}</strong> ({{ m.espessuraMm }}mm / folga {{ m.margemMm }}mm)
+                        </p>
+                        <p class="text-xs text-indigo-700 font-semibold mt-0.5">
+                          Adicional Fixo: {{ m.valorFixoAdicional | currency:'BRL' }}
+                        </p>
+                      </div>
+                      <div class="flex flex-col gap-1 shrink-0">
+                        <button (click)="iniciarEdicaoMaterial(m)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                          Editar
+                        </button>
+                        <button (click)="toggleMaterial(m.id)" class="text-[11px] font-medium px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50">
+                          {{ m.ativo ? 'Desativar' : 'Ativar' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -412,24 +514,80 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               @for (obj of catalogoAdmin.tiposObjeto; track obj.id) {
-                <div class="p-3 rounded-xl border border-slate-200 flex justify-between items-center">
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-bold text-slate-800">{{ obj.nome }}</span>
-                      <span class="text-xs text-slate-400">({{ obj.categoria }})</span>
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                            [ngClass]="obj.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
-                        {{ obj.ativo ? 'Ativo' : 'Inativo' }}
-                      </span>
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                  @if (editandoObjetoId === obj.id) {
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-700 uppercase">Editar Tipo de Objeto</span>
+                        <span class="text-[10px] text-slate-400">ID: {{ obj.id.substring(0, 8) }}...</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome</label>
+                          <input type="text" [(ngModel)]="formEditObjeto.nome" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Categoria</label>
+                          <input type="text" [(ngModel)]="formEditObjeto.categoria" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Larg. Mín</label>
+                          <input type="number" [(ngModel)]="formEditObjeto.larguraMinMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Larg. Máx</label>
+                          <input type="number" [(ngModel)]="formEditObjeto.larguraMaxMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Prof. Mín</label>
+                          <input type="number" [(ngModel)]="formEditObjeto.profundidadeMinMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Prof. Máx</label>
+                          <input type="number" [(ngModel)]="formEditObjeto.profundidadeMaxMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Alt. Mín</label>
+                          <input type="number" [(ngModel)]="formEditObjeto.alturaMinMm" class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                      </div>
+                      <div class="flex justify-end gap-2 pt-1">
+                        <button (click)="cancelarEdicaoObjeto()" class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200">
+                          Cancelar
+                        </button>
+                        <button (click)="salvarEdicaoObjeto(obj.id)" class="px-3 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                          Salvar
+                        </button>
+                      </div>
                     </div>
-                    <p class="text-xs text-slate-500">
-                      Largura: {{ obj.larguraMinMm }}–{{ obj.larguraMaxMm }}mm · Profundidade: {{ obj.profundidadeMinMm }}–{{ obj.profundidadeMaxMm }}mm
-                    </p>
-                  </div>
-                  <button (click)="toggleTipoObjeto(obj.id)"
-                          class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700">
-                    {{ obj.ativo ? 'Desativar' : 'Ativar' }}
-                  </button>
+                  } @else {
+                    <div class="flex justify-between items-start gap-2">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-bold text-slate-800">{{ obj.nome }}</span>
+                          <span class="text-xs text-slate-400">({{ obj.categoria }})</span>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                [ngClass]="obj.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                            {{ obj.ativo ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                          Largura: <strong>{{ obj.larguraMinMm }}–{{ obj.larguraMaxMm }} mm</strong> · Profundidade: <strong>{{ obj.profundidadeMinMm }}–{{ obj.profundidadeMaxMm }} mm</strong>
+                          @if (obj.alturaMinMm) { · Altura Mín: <strong>{{ obj.alturaMinMm }} mm</strong> }
+                        </p>
+                      </div>
+                      <div class="flex flex-col gap-1 shrink-0">
+                        <button (click)="iniciarEdicaoObjeto(obj)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                          Editar
+                        </button>
+                        <button (click)="toggleTipoObjeto(obj.id)" class="text-[11px] font-medium px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50">
+                          {{ obj.ativo ? 'Desativar' : 'Ativar' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -462,6 +620,26 @@ export class AdminComponent implements OnInit {
     profundidadeMinMm: 120,
     profundidadeMaxMm: 260,
     alturaMinMm: 50
+  };
+
+  // Estado de edição - Tipo de Material
+  editandoTipoMatId: string | null = null;
+  formEditTipoMat = { nome: '', espessuraMm: 0, margemMm: 0 };
+
+  // Estado de edição - Material
+  editandoMaterialId: string | null = null;
+  formEditMaterial = { nome: '', cor: '', valorFixoAdicional: 0, tipoMaterialId: '' };
+
+  // Estado de edição - Tipo de Objeto
+  editandoObjetoId: string | null = null;
+  formEditObjeto = {
+    nome: '',
+    categoria: '',
+    larguraMinMm: 0,
+    larguraMaxMm: 0,
+    profundidadeMinMm: 0,
+    profundidadeMaxMm: 0,
+    alturaMinMm: null as number | null
   };
 
   etapaSelecionada: Record<string, string> = {};
@@ -560,6 +738,39 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  iniciarEdicaoTipoMat(tm: TipoMaterialAdminDTO): void {
+    this.editandoTipoMatId = tm.id;
+    this.formEditTipoMat = {
+      nome: tm.nome,
+      espessuraMm: tm.espessuraMm,
+      margemMm: tm.margemMm
+    };
+  }
+
+  cancelarEdicaoTipoMat(): void {
+    this.editandoTipoMatId = null;
+  }
+
+  salvarEdicaoTipoMat(id: string): void {
+    if (!this.formEditTipoMat.nome.trim()) return;
+    this.limparMensagens();
+    this.adminService.atualizarTipoMaterial(id, this.formEditTipoMat).subscribe({
+      next: () => {
+        this.editandoTipoMatId = null;
+        this.mensagemFeedback = 'Tipo de material atualizado com sucesso!';
+        this.carregarCatalogoAdmin();
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  toggleTipoMaterial(id: string): void {
+    this.adminService.toggleAtivoTipoMaterial(id).subscribe({
+      next: () => this.carregarCatalogoAdmin(),
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
   criarMaterial(): void {
     if (!this.novoMaterial.nome.trim() || !this.novoMaterial.tipoMaterialId) return;
     this.limparMensagens();
@@ -568,6 +779,33 @@ export class AdminComponent implements OnInit {
         this.novoMaterial.nome = '';
         this.novoMaterial.cor = '';
         this.mensagemFeedback = 'Material/Revestimento cadastrado com sucesso!';
+        this.carregarCatalogoAdmin();
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  iniciarEdicaoMaterial(m: MaterialAdminDTO): void {
+    this.editandoMaterialId = m.id;
+    this.formEditMaterial = {
+      nome: m.nome,
+      cor: m.cor,
+      valorFixoAdicional: m.valorFixoAdicional,
+      tipoMaterialId: m.tipoMaterialId
+    };
+  }
+
+  cancelarEdicaoMaterial(): void {
+    this.editandoMaterialId = null;
+  }
+
+  salvarEdicaoMaterial(id: string): void {
+    if (!this.formEditMaterial.nome.trim() || !this.formEditMaterial.tipoMaterialId) return;
+    this.limparMensagens();
+    this.adminService.atualizarMaterial(id, this.formEditMaterial).subscribe({
+      next: () => {
+        this.editandoMaterialId = null;
+        this.mensagemFeedback = 'Material atualizado com sucesso!';
         this.carregarCatalogoAdmin();
       },
       error: (err) => this.tratarErro(err)
@@ -588,6 +826,36 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.novoObjeto.nome = '';
         this.mensagemFeedback = 'Objeto adicionado ao catálogo do simulador!';
+        this.carregarCatalogoAdmin();
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  iniciarEdicaoObjeto(obj: TipoObjetoAdminDTO): void {
+    this.editandoObjetoId = obj.id;
+    this.formEditObjeto = {
+      nome: obj.nome,
+      categoria: obj.categoria,
+      larguraMinMm: obj.larguraMinMm,
+      larguraMaxMm: obj.larguraMaxMm,
+      profundidadeMinMm: obj.profundidadeMinMm,
+      profundidadeMaxMm: obj.profundidadeMaxMm,
+      alturaMinMm: obj.alturaMinMm
+    };
+  }
+
+  cancelarEdicaoObjeto(): void {
+    this.editandoObjetoId = null;
+  }
+
+  salvarEdicaoObjeto(id: string): void {
+    if (!this.formEditObjeto.nome.trim()) return;
+    this.limparMensagens();
+    this.adminService.atualizarTipoObjeto(id, this.formEditObjeto).subscribe({
+      next: () => {
+        this.editandoObjetoId = null;
+        this.mensagemFeedback = 'Tipo de objeto atualizado com sucesso!';
         this.carregarCatalogoAdmin();
       },
       error: (err) => this.tratarErro(err)

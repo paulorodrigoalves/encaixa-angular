@@ -306,6 +306,29 @@ export interface CatalogoAdminDTO {
   tiposObjeto: TipoObjetoAdminDTO[];
 }
 
+export interface AtualizarTipoMaterialRequest {
+  nome: string;
+  espessuraMm: number;
+  margemMm: number;
+}
+
+export interface AtualizarMaterialRequest {
+  nome: string;
+  cor: string;
+  valorFixoAdicional: number;
+  tipoMaterialId: string;
+}
+
+export interface AtualizarTipoObjetoRequest {
+  nome: string;
+  categoria: string;
+  larguraMinMm: number;
+  larguraMaxMm: number;
+  profundidadeMinMm: number;
+  profundidadeMaxMm: number;
+  alturaMinMm: number | null;
+}
+
 // Aliases para manter compatibilidade com o componente SVG atual
 export type MedidasGaveta = { larguraMm: number; profundidadeMm: number; alturaMm: number };
 export type LayoutGerado = PreviewLayoutResponse;
