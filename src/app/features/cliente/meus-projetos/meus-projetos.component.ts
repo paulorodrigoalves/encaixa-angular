@@ -595,9 +595,20 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
                   }
                 </div>
 
-                <div class="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-50">
-                  <span>Criado em {{ p.criadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
-                  <span>Qtd: {{ p.quantidade }}</span>
+                <div class="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-100">
+                  <div>
+                    <span>Criado em {{ p.criadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <span class="mx-1.5">·</span>
+                    <span>Qtd: {{ p.quantidade }}</span>
+                  </div>
+                  @if (p.statusCompra !== 'APROVADA') {
+                    <button type="button"
+                            (click)="removerProjeto(p)"
+                            [disabled]="removendoId === p.id"
+                            class="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 font-semibold transition-colors">
+                      {{ removendoId === p.id ? 'Removendo...' : '🗑️ Remover do Carrinho' }}
+                    </button>
+                  }
                 </div>
               </div>
             }
@@ -611,6 +622,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
   projetos: ProjetoSalvoResponse[] = [];
   isLoading = true;
   svgVisivel: Record<string, boolean> = {};
+  removendoId: string | null = null;
 
   compraAbertaId: string | null = null;
   cotacao: CotacaoFreteResponse | null = null;
@@ -877,6 +889,25 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Erro ao buscar projetos', err);
         this.isLoading = false;
+      }
+    });
+  }
+
+  removerProjeto(p: ProjetoSalvoResponse): void {
+    if (this.removendoId) return;
+    this.removendoId = p.id;
+    this.mensagemErro = null;
+    this.mensagemSucesso = null;
+
+    this.projetoService.removerProjeto(p.id).subscribe({
+      next: () => {
+        this.removendoId = null;
+        this.mensagemSucesso = `Organizador "${p.templateNome}" removido do carrinho.`;
+        this.carregarProjetos();
+      },
+      error: (err) => {
+        this.removendoId = null;
+        this.mensagemErro = err?.error?.erro || 'Não foi possível remover o organizador do carrinho.';
       }
     });
   }

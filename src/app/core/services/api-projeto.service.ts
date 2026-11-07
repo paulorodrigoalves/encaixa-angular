@@ -27,6 +27,10 @@ export class ApiProjetoService {
     return this.http.get<ProjetoSalvoResponse[]>(this.baseUrl);
   }
 
+  removerProjeto(projetoId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${projetoId}`);
+  }
+
   cotarFrete(compraId: string, cep: string): Observable<CotacaoFreteResponse> {
     return this.http.get<CotacaoFreteResponse>(`${this.comprasUrl}/${compraId}/cotacao-frete`, {
       params: { cep: cep || '01001000' }
