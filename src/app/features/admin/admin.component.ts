@@ -38,7 +38,7 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
                     [class]="abaAtiva === 'CATALOGO'
                       ? 'bg-white text-slate-900 shadow-sm font-semibold px-4 py-2 rounded-lg text-sm transition-all'
                       : 'text-slate-600 hover:text-slate-900 px-4 py-2 rounded-lg text-sm transition-all'">
-              Catálogo (Materiais & Objetos)
+              Catálogo (Materiais, Objetos & Etapas)
             </button>
           </div>
         </div>
@@ -707,6 +707,130 @@ import { keycloak } from '../../core/keycloak/keycloak.config';
               }
             </div>
           </section>
+
+          <!-- SEÇÃO 4: ETAPAS DA ESTEIRA DE PRODUÇÃO (PERSONALIZÁVEL PELO DONO DO PROJETO) -->
+          <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+            <div class="border-b border-slate-100 pb-3 flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div>
+                <h2 class="text-xl font-bold text-slate-800">
+                  4. Etapas da Esteira de Produção ({{ catalogoAdmin.etapasProducao?.length || 0 }})
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Personalize as etapas pelas quais os pedidos passam na sua marcenaria (ex: Corte, Colagem do Tecido, Controle de Qualidade, Expedição).
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div class="md:col-span-5">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nome da Etapa</label>
+                <input type="text" [(ngModel)]="novaEtapa.nome" placeholder="Ex: Revestimento e Colagem"
+                       class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Ordem na Esteira</label>
+                <input type="number" min="1" [(ngModel)]="novaEtapa.ordem"
+                       class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white" />
+              </div>
+              <div class="md:col-span-3 flex items-center h-9">
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700 select-none">
+                  <input type="checkbox" [(ngModel)]="novaEtapa.usaRastreio"
+                         class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
+                  <span>Exige código de rastreio</span>
+                </label>
+              </div>
+              <div class="md:col-span-2">
+                <button (click)="criarEtapaProducao()"
+                        class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded-lg text-xs font-semibold">
+                  + Cadastrar Etapa
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              @for (ep of (catalogoAdmin.etapasProducao || []); track ep.id) {
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
+                  @if (editandoEtapaId === ep.id) {
+                    <div class="space-y-2.5">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-700 uppercase">Editar Etapa de Produção</span>
+                        <span class="text-[10px] text-slate-400">Ordem atual: #{{ ep.ordem }}</span>
+                      </div>
+                      <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Nome da Etapa</label>
+                          <input type="text" [(ngModel)]="formEditEtapa.nome"
+                                 class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-medium text-slate-600 mb-0.5">Ordem</label>
+                          <input type="number" min="1" [(ngModel)]="formEditEtapa.ordem"
+                                 class="w-full p-1.5 text-xs border border-slate-300 rounded-lg" />
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-between pt-1">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                          <input type="checkbox" [(ngModel)]="formEditEtapa.usaRastreio"
+                                 class="rounded border-slate-300 text-indigo-600 w-4 h-4" />
+                          <span>Exige código de rastreio ao avançar</span>
+                        </label>
+                        <div class="flex gap-2">
+                          <button (click)="cancelarEdicaoEtapa()"
+                                  class="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200">
+                            Cancelar
+                          </button>
+                          <button (click)="salvarEdicaoEtapa(ep.id)"
+                                  class="px-3 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                            Salvar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="flex justify-between items-start gap-2">
+                      <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                          #{{ ep.ordem }}
+                        </span>
+                        <div>
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-bold text-slate-800">{{ ep.nome }}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                  [ngClass]="ep.ativo !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                              {{ ep.ativo !== false ? 'Ativa' : 'Inativa' }}
+                            </span>
+                            @if (ep.usaRastreio) {
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-800">
+                                🚚 Exige Rastreio
+                              </span>
+                            }
+                          </div>
+                          <p class="text-[11px] text-slate-400 mt-0.5">
+                            {{ ep.usaRastreio ? 'Solicita código de rastreio da transportadora' : 'Etapa interna de fabricação' }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        <button (click)="iniciarEdicaoEtapa(ep)"
+                                class="text-xs font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                          Editar
+                        </button>
+                        <button (click)="toggleEtapaProducao(ep.id)"
+                                class="text-[11px] font-medium px-2 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+                          {{ ep.ativo !== false ? 'Desativar' : 'Ativar' }}
+                        </button>
+                        <button (click)="excluirEtapaProducao(ep.id)"
+                                title="Excluir etapa"
+                                class="text-[11px] font-medium px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50">
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
         }
       </div>
     </main>
@@ -757,6 +881,19 @@ export class AdminComponent implements OnInit {
     alturaMinMm: null as number | null
   };
 
+  // Estado de cadastro e edição - Etapa de Produção
+  novaEtapa = {
+    nome: '',
+    ordem: 1,
+    usaRastreio: false
+  };
+  editandoEtapaId: string | null = null;
+  formEditEtapa = {
+    nome: '',
+    ordem: 1,
+    usaRastreio: false
+  };
+
   etapaSelecionada: Record<string, string> = {};
   rastreioInput: Record<string, string> = {};
   obsInput: Record<string, string> = {};
@@ -802,6 +939,18 @@ export class AdminComponent implements OnInit {
         if (cat.tiposMaterial.length > 0 && !this.novoMaterial.tipoMaterialId) {
           this.novoMaterial.tipoMaterialId = cat.tiposMaterial[0].id;
         }
+        const totalEtapas = cat.etapasProducao?.length || 0;
+        this.novaEtapa.ordem = totalEtapas + 1;
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  private recarregarEtapasEEsteira(): void {
+    this.carregarCatalogoAdmin();
+    this.adminService.listarEtapasCatalogo().subscribe({
+      next: (etapas) => {
+        this.etapasCatalogo = etapas;
       },
       error: (err) => this.tratarErro(err)
     });
@@ -1006,6 +1155,65 @@ export class AdminComponent implements OnInit {
   toggleTipoObjeto(id: string): void {
     this.adminService.toggleAtivoTipoObjeto(id).subscribe({
       next: () => this.carregarCatalogoAdmin(),
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  criarEtapaProducao(): void {
+    if (!this.novaEtapa.nome.trim()) return;
+    this.limparMensagens();
+    this.adminService.criarEtapaProducao(this.novaEtapa).subscribe({
+      next: () => {
+        this.novaEtapa.nome = '';
+        this.novaEtapa.usaRastreio = false;
+        this.mensagemFeedback = 'Nova etapa de produção cadastrada com sucesso!';
+        this.recarregarEtapasEEsteira();
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  iniciarEdicaoEtapa(ep: EtapaProducaoDTO): void {
+    this.editandoEtapaId = ep.id;
+    this.formEditEtapa = {
+      nome: ep.nome,
+      ordem: ep.ordem,
+      usaRastreio: ep.usaRastreio
+    };
+  }
+
+  cancelarEdicaoEtapa(): void {
+    this.editandoEtapaId = null;
+  }
+
+  salvarEdicaoEtapa(id: string): void {
+    if (!this.formEditEtapa.nome.trim()) return;
+    this.limparMensagens();
+    this.adminService.atualizarEtapaProducao(id, this.formEditEtapa).subscribe({
+      next: () => {
+        this.editandoEtapaId = null;
+        this.mensagemFeedback = 'Etapa de produção atualizada com sucesso!';
+        this.recarregarEtapasEEsteira();
+      },
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  toggleEtapaProducao(id: string): void {
+    this.limparMensagens();
+    this.adminService.toggleAtivoEtapaProducao(id).subscribe({
+      next: () => this.recarregarEtapasEEsteira(),
+      error: (err) => this.tratarErro(err)
+    });
+  }
+
+  excluirEtapaProducao(id: string): void {
+    this.limparMensagens();
+    this.adminService.excluirEtapaProducao(id).subscribe({
+      next: () => {
+        this.mensagemFeedback = 'Etapa de produção removida do catálogo!';
+        this.recarregarEtapasEEsteira();
+      },
       error: (err) => this.tratarErro(err)
     });
   }

@@ -2,11 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  AtualizarEtapaProducaoRequest,
   AtualizarMaterialRequest,
   AtualizarTipoMaterialRequest,
   AtualizarTipoObjetoRequest,
   CatalogoAdminDTO,
   CompraAdminDTO,
+  CriarEtapaProducaoRequest,
   CriarMaterialRequest,
   EtapaProducaoDTO,
   PlanoCorteProjetoDTO,
@@ -99,6 +101,22 @@ export class ApiAdminService {
 
   toggleAtivoTipoObjeto(id: string): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/catalogo/tipos-objeto/${id}/toggle-ativo`, {});
+  }
+
+  criarEtapaProducao(req: CriarEtapaProducaoRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/catalogo/etapas-producao`, req);
+  }
+
+  atualizarEtapaProducao(id: string, req: AtualizarEtapaProducaoRequest): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/catalogo/etapas-producao/${id}`, req);
+  }
+
+  toggleAtivoEtapaProducao(id: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/catalogo/etapas-producao/${id}/toggle-ativo`, {});
+  }
+
+  excluirEtapaProducao(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/catalogo/etapas-producao/${id}`);
   }
 }
 

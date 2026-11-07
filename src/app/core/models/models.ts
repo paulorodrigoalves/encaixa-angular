@@ -208,6 +208,19 @@ export interface EtapaProducaoDTO {
   nome: string;
   ordem: number;
   usaRastreio: boolean;
+  ativo?: boolean;
+}
+
+export interface CriarEtapaProducaoRequest {
+  nome: string;
+  ordem: number;
+  usaRastreio: boolean;
+}
+
+export interface AtualizarEtapaProducaoRequest {
+  nome: string;
+  ordem: number;
+  usaRastreio: boolean;
 }
 
 export interface PedidoEtapaHistoricoDTO {
@@ -308,6 +321,7 @@ export interface CatalogoAdminDTO {
   tiposMaterial: TipoMaterialAdminDTO[];
   materiais: MaterialAdminDTO[];
   tiposObjeto: TipoObjetoAdminDTO[];
+  etapasProducao?: EtapaProducaoDTO[];
 }
 
 export interface CriarMaterialRequest {
