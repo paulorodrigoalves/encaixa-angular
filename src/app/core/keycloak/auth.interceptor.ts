@@ -2,8 +2,8 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { keycloak } from './keycloak.config';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Não envia token em rotas públicas
-  if (req.url.includes('/api/public/')) {
+  // Só envia token para a API interna e nunca em rotas públicas
+  if (!req.url.includes('/api/') || req.url.includes('/api/public/')) {
     return next(req);
   }
 

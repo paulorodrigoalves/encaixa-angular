@@ -109,13 +109,23 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
               <div class="md:col-span-3">
                 <label class="block text-xs font-medium text-slate-600 mb-1">CEP</label>
                 <div class="flex gap-1">
-                  <input type="text" [(ngModel)]="endereco.cep" placeholder="01001-000"
+                  <input type="text"
+                         [(ngModel)]="endereco.cep"
+                         (ngModelChange)="aoDigitarCep($event)"
+                         maxlength="9"
+                         placeholder="01001-000"
                          class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
-                  <button type="button" (click)="recalcularFrete()"
-                          class="bg-slate-800 hover:bg-slate-900 text-white px-3 rounded-lg text-xs font-semibold">
-                    Calcular
+                  <button type="button" (click)="buscarCepERecalcular()" [disabled]="buscandoCep"
+                          class="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white px-3 rounded-lg text-xs font-semibold">
+                    {{ buscandoCep ? '...' : 'Calcular' }}
                   </button>
                 </div>
+                @if (buscandoCep) {
+                  <span class="block text-[11px] text-indigo-600 mt-1">Buscando endereço pelo CEP...</span>
+                }
+                @if (erroCep) {
+                  <span class="block text-[11px] text-amber-700 mt-1">{{ erroCep }}</span>
+                }
               </div>
               <div class="md:col-span-3">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp</label>
@@ -322,7 +332,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
 
   telefone = '';
   endereco: EnderecoDTO = {
-    cep: '01310-100',
+    cep: '',
     logradouro: '',
     numero: '',
     complemento: '',
@@ -330,6 +340,9 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
     cidade: '',
     estado: 'SP'
   };
+  buscandoCep = false;
+  erroCep: string | null = null;
+  private ultimoCepBuscado = '';
 
   compraAguardandoPagamentoId: string | null = null;
   totalAguardandoPagamento = 0;
@@ -437,7 +450,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
         const emAberto = lista.find(p => p.compraId && !p.transportadora && p.statusCompra === 'FECHADA');
         if (emAberto) {
           this.compraAbertaId = emAberto.compraId;
-          this.recalcularFrete();
+          this.recalcularFrete(true);
         } else {
           this.compraAbertaId = null;
           this.cotacao = null;
@@ -450,19 +463,88 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
     });
   }
 
-  recalcularFrete(): void {
+  aoDigitarCep(valor: string): void {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 8);
+    this.endereco.cep = digitos.length > 5
+      ? `${digitos.slice(0, 5)}-${digitos.slice(5)}`
+      : digitos;
+    this.erroCep = null;
+
+    if (digitos.length === 8 && digitos !== this.ultimoCepBuscado) {
+      this.consultarViaCep(digitos, true);
+    } else if (digitos.length < 8) {
+      this.ultimoCepBuscado = '';
+    }
+  }
+
+  buscarCepERecalcular(): void {
+    const digitos = (this.endereco.cep || '').replace(/\D/g, '');
+    if (digitos.length === 8) {
+      this.consultarViaCep(digitos, true);
+    } else {
+      this.recalcularFrete(false);
+    }
+  }
+
+  async consultarViaCep(cepLimpo: string, atualizarFrete = true): Promise<void> {
+    this.buscandoCep = true;
+    this.erroCep = null;
+    this.ultimoCepBuscado = cepLimpo;
+
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      if (resp.ok) {
+        const dados = await resp.json();
+        if (!dados.erro) {
+          this.endereco.logradouro = dados.logradouro || this.endereco.logradouro;
+          this.endereco.bairro = dados.bairro || this.endereco.bairro;
+          this.endereco.cidade = dados.localidade || this.endereco.cidade;
+          this.endereco.estado = dados.uf || this.endereco.estado;
+          if (!this.endereco.complemento && dados.complemento) {
+            this.endereco.complemento = dados.complemento;
+          }
+          return;
+        }
+      }
+
+      // Fallback para BrasilAPI caso ViaCEP retorne erro ou indisponibilidade
+      const respBr = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
+      if (respBr.ok) {
+        const dadosBr = await respBr.json();
+        this.endereco.logradouro = dadosBr.street || this.endereco.logradouro;
+        this.endereco.bairro = dadosBr.neighborhood || this.endereco.bairro;
+        this.endereco.cidade = dadosBr.city || this.endereco.cidade;
+        this.endereco.estado = dadosBr.state || this.endereco.estado;
+      } else {
+        this.erroCep = 'CEP não encontrado. Preencha os campos manualmente.';
+      }
+    } catch {
+      this.erroCep = 'Não foi possível consultar o CEP automaticamente.';
+    } finally {
+      this.buscandoCep = false;
+      if (atualizarFrete) {
+        this.recalcularFrete(false);
+      }
+    }
+  }
+
+  recalcularFrete(carregarEnderecoSalvo = false): void {
     if (!this.compraAbertaId) return;
     this.projetoService.cotarFrete(this.compraAbertaId, this.endereco.cep).subscribe({
       next: (cot) => {
         this.cotacao = cot;
         if (cot.opcoesFrete.length > 0) {
-          this.freteSelecionado = cot.opcoesFrete[0];
+          const selecionadaAtual = this.freteSelecionado?.transportadora;
+          this.freteSelecionado = cot.opcoesFrete.find(o => o.transportadora === selecionadaAtual) || cot.opcoesFrete[0];
         }
-        if (cot.telefoneAtual && cot.telefoneAtual !== '00000000000') {
-          this.telefone = cot.telefoneAtual;
-        }
-        if (cot.enderecoAtual) {
-          this.endereco = { ...cot.enderecoAtual };
+        if (carregarEnderecoSalvo) {
+          if (cot.telefoneAtual && cot.telefoneAtual !== '00000000000') {
+            this.telefone = cot.telefoneAtual;
+          }
+          if (cot.enderecoAtual && cot.enderecoAtual.cep) {
+            this.endereco = { ...cot.enderecoAtual };
+            this.ultimoCepBuscado = cot.enderecoAtual.cep.replace(/\D/g, '');
+          }
         }
       },
       error: (err) => console.error('Erro ao cotar frete', err)
