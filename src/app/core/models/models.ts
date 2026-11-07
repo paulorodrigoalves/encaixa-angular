@@ -348,12 +348,25 @@ export type LayoutGerado = PreviewLayoutResponse;
 export type DivisoriaRender = DivisoriaRenderDTO;
 export type ObjetoPosicionado = ObjetoPosicionadoDTO;
 
+export type MetodoPagamento = 'PIX' | 'CARTAO_CREDITO' | 'BOLETO';
+
+export interface PagamentoCartaoRequest {
+  numeroCartao: string;
+  nomeTitular: string;
+  validade: string;
+  cvv: string;
+  parcelas: number;
+}
+
 export interface PagamentoResponse {
   pagamentoId: string;
   compraId: string;
+  metodoPagamento?: MetodoPagamento;
+  parcelas?: number;
   status: 'PENDENTE' | 'APROVADO' | 'REJEITADO' | 'CANCELADO' | 'ESTORNADO';
   valor: number;
   pixCopiaCola: string | null;
   pixQrBase64: string | null;
   ticketUrl: string | null;
+  modoSimulacao?: boolean;
 }

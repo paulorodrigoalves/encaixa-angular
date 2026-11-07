@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,7 +7,9 @@ import {
   CotacaoFreteResponse,
   EnderecoDTO,
   LayoutGerado,
+  MetodoPagamento,
   OpcaoFreteDTO,
+  PagamentoCartaoRequest,
   PagamentoResponse,
   ProjetoSalvoResponse
 } from '../../../core/models/models';
@@ -24,7 +26,7 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-3xl font-bold text-slate-800">Meus Projetos & Pedidos</h1>
-            <p class="text-slate-500 mt-1">Configure seu carrinho, calcule o frete e acompanhe a produção</p>
+            <p class="text-slate-500 mt-1">Configure seu carrinho, calcule o frete, escolha o pagamento e acompanhe a produção</p>
           </div>
           <a routerLink="/"
              class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -33,51 +35,194 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
         </div>
 
         @if (mensagemSucesso) {
-          <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium">
-            {{ mensagemSucesso }}
+          <div class="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium flex items-center justify-between">
+            <span>✅ {{ mensagemSucesso }}</span>
+            <button (click)="mensagemSucesso = null" class="text-emerald-600 hover:text-emerald-900 font-bold text-base">&times;</button>
           </div>
         }
         @if (mensagemErro) {
-          <div class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
-            {{ mensagemErro }}
+          <div class="p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium flex items-center justify-between">
+            <span>⚠️ {{ mensagemErro }}</span>
+            <button (click)="mensagemErro = null" class="text-red-500 hover:text-red-800 font-bold text-base">&times;</button>
           </div>
         }
 
-        <!-- CARD DE PAGAMENTO PIX (compra fechada aguardando pagamento) -->
+        <!-- CARD DE PAGAMENTO (compra fechada aguardando pagamento) -->
         @if (compraAguardandoPagamentoId) {
-          <section class="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <section class="bg-white rounded-2xl p-6 border-2 border-emerald-200 shadow-sm space-y-5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
-                <span class="text-xs font-bold uppercase text-emerald-600">Pagamento</span>
-                <h2 class="text-xl font-bold text-slate-800 mt-1">Pagar com PIX</h2>
-                <p class="text-sm text-slate-500">Total da compra: <strong>{{ totalAguardandoPagamento | currency:'BRL' }}</strong></p>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-800">
+                  Etapa de Pagamento
+                </span>
+                <h2 class="text-xl font-bold text-slate-800 mt-1">Escolha como deseja pagar seu pedido</h2>
+                <p class="text-sm text-slate-500">
+                  Total com frete incluso: <strong class="text-emerald-700 text-base">{{ totalAguardandoPagamento | currency:'BRL' }}</strong>
+                </p>
               </div>
-              @if (!pagamento) {
-                <button (click)="pagarComPix()" [disabled]="gerandoPix"
-                        class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
-                  {{ gerandoPix ? 'Gerando PIX...' : 'Gerar QR Code PIX' }}
+
+              <!-- Seletor de Forma de Pagamento -->
+              <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                <button type="button" (click)="selecionarMetodoPagamento('PIX')"
+                        [ngClass]="metodoPagamentoSelecionado === 'PIX'
+                          ? 'bg-white text-slate-900 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="px-3.5 py-2 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                  <span>⚡</span> PIX
                 </button>
-              }
+                <button type="button" (click)="selecionarMetodoPagamento('CARTAO_CREDITO')"
+                        [ngClass]="metodoPagamentoSelecionado === 'CARTAO_CREDITO'
+                          ? 'bg-white text-slate-900 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="px-3.5 py-2 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                  <span>💳</span> Cartão de Crédito
+                </button>
+                <button type="button" (click)="selecionarMetodoPagamento('BOLETO')"
+                        [ngClass]="metodoPagamentoSelecionado === 'BOLETO'
+                          ? 'bg-white text-slate-900 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="px-3.5 py-2 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                  <span>📄</span> Boleto
+                </button>
+              </div>
             </div>
 
-            @if (pagamento) {
-              <div class="grid md:grid-cols-[200px_1fr] gap-6 items-center">
-                @if (pagamento.pixQrBase64) {
-                  <img [src]="'data:image/png;base64,' + pagamento.pixQrBase64" alt="QR Code PIX"
-                       class="w-48 h-48 border border-slate-200 rounded-xl" />
-                }
-                <div class="space-y-3">
-                  <p class="text-sm text-slate-600">Escaneie o QR Code no app do seu banco ou use o PIX copia e cola:</p>
-                  @if (pagamento.pixCopiaCola) {
-                    <textarea readonly rows="3" [value]="pagamento.pixCopiaCola"
-                              class="w-full p-2 text-xs font-mono border border-slate-300 rounded-lg bg-slate-50"></textarea>
-                    <button (click)="copiarPix()"
-                            class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                      {{ pixCopiado ? 'Copiado!' : 'Copiar código PIX' }}
+            <!-- ABA 1: PIX -->
+            @if (metodoPagamentoSelecionado === 'PIX') {
+              <div class="space-y-4">
+                @if (!pagamento || pagamento.metodoPagamento === 'BOLETO') {
+                  <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                      <p class="text-sm font-bold text-slate-800">Pagamento Instantâneo via PIX</p>
+                      <p class="text-xs text-slate-500">Gere o QR Code ou código Copia e Cola. A liberação para a marcenaria é imediata.</p>
+                    </div>
+                    <button (click)="pagarComPix()" [disabled]="processandoPagamento"
+                            class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shrink-0">
+                      {{ processandoPagamento ? 'Gerando PIX...' : 'Gerar QR Code PIX' }}
                     </button>
-                  }
-                  <p class="text-xs text-slate-400">Aguardando confirmação do pagamento... esta tela atualiza sozinha.</p>
+                  </div>
+                }
+
+                @if (pagamento && pagamento.metodoPagamento !== 'BOLETO') {
+                  <div class="grid md:grid-cols-[200px_1fr] gap-6 items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    @if (pagamento.pixQrBase64) {
+                      <img [src]="'data:image/png;base64,' + pagamento.pixQrBase64" alt="QR Code PIX"
+                           class="w-48 h-48 border border-slate-200 rounded-xl bg-white p-2 mx-auto" />
+                    }
+                    <div class="space-y-3">
+                      <p class="text-sm font-medium text-slate-700">Escaneie o QR Code no app do seu banco ou use o PIX Copia e Cola:</p>
+                      @if (pagamento.pixCopiaCola) {
+                        <textarea readonly rows="3" [value]="pagamento.pixCopiaCola"
+                                  class="w-full p-2.5 text-xs font-mono border border-slate-300 rounded-lg bg-white"></textarea>
+                        <div class="flex flex-wrap gap-2">
+                          <button (click)="copiarCodigoPagamento()"
+                                  class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                            {{ codigoCopiado ? '✓ Código Copiado!' : '📋 Copiar Código PIX' }}
+                          </button>
+                          <button (click)="confirmarPagamentoSimulado()" [disabled]="processandoPagamento"
+                                  class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                            {{ processandoPagamento ? 'Confirmando...' : '✅ Simular Confirmação do PIX' }}
+                          </button>
+                        </div>
+                      }
+                      <p class="text-xs text-slate-400">Aguardando confirmação do pagamento... assim que confirmado, seu pedido entra em produção automaticamente.</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- ABA 2: CARTÃO DE CRÉDITO -->
+            @if (metodoPagamentoSelecionado === 'CARTAO_CREDITO') {
+              <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div class="md:col-span-5">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Número do Cartão</label>
+                    <input type="text"
+                           [(ngModel)]="dadosCartao.numeroCartao"
+                           (ngModelChange)="formatarNumeroCartao($event)"
+                           maxlength="19"
+                           placeholder="0000 0000 0000 0000"
+                           class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white font-mono placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-4">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nome Impresso no Cartão</label>
+                    <input type="text"
+                           [(ngModel)]="dadosCartao.nomeTitular"
+                           placeholder="Ex: JOAO M SILVA"
+                           class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white uppercase placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Validade</label>
+                    <input type="text"
+                           [(ngModel)]="dadosCartao.validade"
+                           (ngModelChange)="formatarValidadeCartao($event)"
+                           maxlength="5"
+                           placeholder="MM/AA"
+                           class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white text-center placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-1">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">CVV</label>
+                    <input type="text"
+                           [(ngModel)]="dadosCartao.cvv"
+                           maxlength="4"
+                           placeholder="123"
+                           class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white text-center placeholder:text-slate-300" />
+                  </div>
                 </div>
+
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-2">
+                  <div class="w-full md:w-72">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Parcelamento (sem juros)</label>
+                    <select [(ngModel)]="dadosCartao.parcelas"
+                            class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white">
+                      @for (p of opcoesParcelas; track p) {
+                        <option [ngValue]="p">
+                          {{ p }}x de {{ (totalAguardandoPagamento / p) | currency:'BRL' }} sem juros
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <button type="button" (click)="pagarComCartao()" [disabled]="processandoPagamento"
+                          class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                    {{ processandoPagamento ? 'Processando Cartão...' : '💳 Finalizar Pagamento com Cartão' }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- ABA 3: BOLETO BANCÁRIO -->
+            @if (metodoPagamentoSelecionado === 'BOLETO') {
+              <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                @if (!pagamento || pagamento.metodoPagamento !== 'BOLETO') {
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-bold text-slate-800">Boleto Bancário Registrado</p>
+                      <p class="text-xs text-slate-500">Pagável em qualquer banco ou lotérica até o vencimento (compensação em até 1 dia útil).</p>
+                    </div>
+                    <button (click)="gerarBoleto()" [disabled]="processandoPagamento"
+                            class="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shrink-0">
+                      {{ processandoPagamento ? 'Gerando Boleto...' : '📄 Emitir Boleto Bancário' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="space-y-3">
+                    <p class="text-xs font-bold uppercase text-slate-500">Linha Digitável do Boleto</p>
+                    <input type="text" readonly [value]="pagamento.pixCopiaCola"
+                           class="w-full p-3 text-sm font-mono border border-slate-300 rounded-lg bg-white" />
+                    <div class="flex flex-wrap gap-2">
+                      <button (click)="copiarCodigoPagamento()"
+                              class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                        {{ codigoCopiado ? '✓ Linha Digitável Copiada!' : '📋 Copiar Linha Digitável' }}
+                      </button>
+                      <button (click)="confirmarPagamentoSimulado()" [disabled]="processandoPagamento"
+                              class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                        {{ processandoPagamento ? 'Confirmando...' : '✅ Simular Compensação do Boleto' }}
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </section>
@@ -91,7 +236,7 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
                   Carrinho Aberto ({{ cotacao.totalItens }} organizador(es))
                 </span>
-                <h2 class="text-xl font-bold text-slate-800 mt-1">Finalizar Endereço de Entrega & Frete</h2>
+                <h2 class="text-xl font-bold text-slate-800 mt-1">Finalizar Endereço de Entrega, Frete & Pagamento</h2>
                 <p class="text-xs text-slate-500">
                   Pacote estimado pelo sistema: <strong>{{ cotacao.pacote.larguraCm }} x {{ cotacao.pacote.profundidadeCm }} x {{ cotacao.pacote.alturaCm }} cm</strong>
                   · Peso total estimado: <strong>{{ cotacao.pacote.pesoKg }} kg</strong>
@@ -100,21 +245,23 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
               <div class="text-right">
                 <span class="block text-xs text-slate-400">Subtotal Gavetas + Frete</span>
                 <span class="text-2xl font-bold text-emerald-600">
-                  {{ (cotacao.subtotalProjetos + (freteSelecionado?.valorFrete || 0)) | currency:'BRL' }}
+                  {{ totalCarrinhoComFrete | currency:'BRL' }}
                 </span>
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div class="md:col-span-3">
-                <label class="block text-xs font-medium text-slate-600 mb-1">CEP</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">CEP *</label>
                 <div class="flex gap-1">
                   <input type="text"
+                         name="cep"
                          [(ngModel)]="endereco.cep"
                          (ngModelChange)="aoDigitarCep($event)"
                          maxlength="9"
-                         placeholder="01001-000"
-                         class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                         placeholder="Digite o CEP"
+                         [ngClass]="camposInvalidos['cep'] ? 'border-red-500 bg-red-50/40 ring-1 ring-red-400' : 'border-slate-300'"
+                         class="w-full p-2 text-sm border rounded-lg placeholder:text-slate-300" />
                   <button type="button" (click)="buscarCepERecalcular()" [disabled]="buscandoCep"
                           class="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white px-3 rounded-lg text-xs font-semibold">
                     {{ buscandoCep ? '...' : 'Calcular' }}
@@ -127,47 +274,84 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
                   <span class="block text-[11px] text-amber-700 mt-1">{{ erroCep }}</span>
                 }
               </div>
+
               <div class="md:col-span-3">
-                <label class="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp</label>
-                <input type="text" [(ngModel)]="telefone" placeholder="(11) 99999-9999"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <label class="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp *</label>
+                <input type="text"
+                       name="telefone"
+                       [(ngModel)]="telefone"
+                       (ngModelChange)="aoDigitarTelefone($event)"
+                       maxlength="15"
+                       placeholder="Digite seu WhatsApp"
+                       [ngClass]="camposInvalidos['telefone'] ? 'border-red-500 bg-red-50/40 ring-1 ring-red-400' : 'border-slate-300'"
+                       class="w-full p-2 text-sm border rounded-lg placeholder:text-slate-300" />
               </div>
+
               <div class="md:col-span-4">
-                <label class="block text-xs font-medium text-slate-600 mb-1">Rua / Logradouro</label>
-                <input type="text" [(ngModel)]="endereco.logradouro" placeholder="Av. Paulista"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <label class="block text-xs font-medium text-slate-600 mb-1">Rua / Logradouro *</label>
+                <input type="text"
+                       name="logradouro"
+                       [(ngModel)]="endereco.logradouro"
+                       (ngModelChange)="camposInvalidos['logradouro'] = false"
+                       placeholder="Preenchido pelo CEP"
+                       [ngClass]="camposInvalidos['logradouro'] ? 'border-red-500 bg-red-50/40 ring-1 ring-red-400' : 'border-slate-300'"
+                       class="w-full p-2 text-sm border rounded-lg placeholder:text-slate-300" />
               </div>
+
               <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 mb-1">Número</label>
-                <input type="text" [(ngModel)]="endereco.numero" placeholder="1000"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <label class="block text-xs font-medium text-slate-600 mb-1">Número *</label>
+                <input type="text"
+                       name="numero"
+                       [(ngModel)]="endereco.numero"
+                       (ngModelChange)="camposInvalidos['numero'] = false"
+                       placeholder="Nº ou S/N"
+                       [ngClass]="camposInvalidos['numero'] ? 'border-red-500 bg-red-50/40 ring-1 ring-red-400' : 'border-slate-300'"
+                       class="w-full p-2 text-sm border rounded-lg placeholder:text-slate-300" />
               </div>
 
               <div class="md:col-span-3">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Complemento</label>
-                <input type="text" [(ngModel)]="endereco.complemento" placeholder="Apto 42"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <input type="text"
+                       name="complemento"
+                       [(ngModel)]="endereco.complemento"
+                       placeholder="Apto, Bloco, Casa (opcional)"
+                       class="w-full p-2 text-sm border border-slate-300 rounded-lg placeholder:text-slate-300" />
               </div>
+
               <div class="md:col-span-3">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Bairro</label>
-                <input type="text" [(ngModel)]="endereco.bairro" placeholder="Bela Vista"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <input type="text"
+                       name="bairro"
+                       [(ngModel)]="endereco.bairro"
+                       placeholder="Preenchido pelo CEP"
+                       class="w-full p-2 text-sm border border-slate-300 rounded-lg placeholder:text-slate-300" />
               </div>
+
               <div class="md:col-span-4">
-                <label class="block text-xs font-medium text-slate-600 mb-1">Cidade</label>
-                <input type="text" [(ngModel)]="endereco.cidade" placeholder="São Paulo"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg" />
+                <label class="block text-xs font-medium text-slate-600 mb-1">Cidade *</label>
+                <input type="text"
+                       name="cidade"
+                       [(ngModel)]="endereco.cidade"
+                       (ngModelChange)="camposInvalidos['cidade'] = false"
+                       placeholder="Preenchido pelo CEP"
+                       [ngClass]="camposInvalidos['cidade'] ? 'border-red-500 bg-red-50/40 ring-1 ring-red-400' : 'border-slate-300'"
+                       class="w-full p-2 text-sm border rounded-lg placeholder:text-slate-300" />
               </div>
+
               <div class="md:col-span-2">
                 <label class="block text-xs font-medium text-slate-600 mb-1">UF</label>
-                <input type="text" [(ngModel)]="endereco.estado" maxlength="2" placeholder="SP"
-                       class="w-full p-2 text-sm border border-slate-300 rounded-lg uppercase" />
+                <input type="text"
+                       name="estado"
+                       [(ngModel)]="endereco.estado"
+                       maxlength="2"
+                       placeholder="UF"
+                       class="w-full p-2 text-sm border border-slate-300 rounded-lg uppercase placeholder:text-slate-300" />
               </div>
             </div>
 
             <!-- Opções de Frete -->
             <div class="space-y-2">
-              <label class="block text-xs font-bold uppercase text-slate-500">Escolha a Transportadora</label>
+              <label class="block text-xs font-bold uppercase text-slate-500">1. Escolha a Transportadora</label>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 @for (op of cotacao.opcoesFrete; track op.transportadora) {
                   <div (click)="freteSelecionado = op"
@@ -185,10 +369,112 @@ import { keycloak } from '../../../core/keycloak/keycloak.config';
               </div>
             </div>
 
+            <!-- Opções de Forma de Pagamento no Checkout -->
+            <div class="space-y-3">
+              <label class="block text-xs font-bold uppercase text-slate-500">2. Escolha a Forma de Pagamento</label>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div (click)="metodoPagamentoSelecionado = 'PIX'"
+                     class="p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3"
+                     [ngClass]="metodoPagamentoSelecionado === 'PIX'
+                       ? 'border-emerald-600 bg-emerald-50/60 ring-1 ring-emerald-600'
+                       : 'border-slate-200 hover:border-slate-300 bg-slate-50'">
+                  <span class="text-xl">⚡</span>
+                  <div>
+                    <p class="text-sm font-bold text-slate-800">PIX</p>
+                    <p class="text-xs text-slate-500">QR Code e Copia e Cola · Liberação imediata</p>
+                  </div>
+                </div>
+
+                <div (click)="metodoPagamentoSelecionado = 'CARTAO_CREDITO'"
+                     class="p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3"
+                     [ngClass]="metodoPagamentoSelecionado === 'CARTAO_CREDITO'
+                       ? 'border-emerald-600 bg-emerald-50/60 ring-1 ring-emerald-600'
+                       : 'border-slate-200 hover:border-slate-300 bg-slate-50'">
+                  <span class="text-xl">💳</span>
+                  <div>
+                    <p class="text-sm font-bold text-slate-800">Cartão de Crédito</p>
+                    <p class="text-xs text-slate-500">Até 12x sem juros · Aprovação na hora</p>
+                  </div>
+                </div>
+
+                <div (click)="metodoPagamentoSelecionado = 'BOLETO'"
+                     class="p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3"
+                     [ngClass]="metodoPagamentoSelecionado === 'BOLETO'
+                       ? 'border-emerald-600 bg-emerald-50/60 ring-1 ring-emerald-600'
+                       : 'border-slate-200 hover:border-slate-300 bg-slate-50'">
+                  <span class="text-xl">📄</span>
+                  <div>
+                    <p class="text-sm font-bold text-slate-800">Boleto Bancário</p>
+                    <p class="text-xs text-slate-500">Linha digitável · Compensação em 1 dia útil</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulário inline de Cartão caso selecionado já no checkout -->
+              @if (metodoPagamentoSelecionado === 'CARTAO_CREDITO') {
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-3 mt-2">
+                  <div class="md:col-span-4">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Número do Cartão *</label>
+                    <input type="text"
+                           name="numeroCartao"
+                           [(ngModel)]="dadosCartao.numeroCartao"
+                           (ngModelChange)="formatarNumeroCartao($event)"
+                           maxlength="19"
+                           placeholder="0000 0000 0000 0000"
+                           class="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white font-mono placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-3">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nome no Cartão *</label>
+                    <input type="text"
+                           name="nomeTitular"
+                           [(ngModel)]="dadosCartao.nomeTitular"
+                           placeholder="NOME IMPRESSO"
+                           class="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white uppercase placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Validade *</label>
+                    <input type="text"
+                           name="validade"
+                           [(ngModel)]="dadosCartao.validade"
+                           (ngModelChange)="formatarValidadeCartao($event)"
+                           maxlength="5"
+                           placeholder="MM/AA"
+                           class="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white text-center placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-1">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">CVV *</label>
+                    <input type="text"
+                           name="cvv"
+                           [(ngModel)]="dadosCartao.cvv"
+                           maxlength="4"
+                           placeholder="123"
+                           class="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white text-center placeholder:text-slate-300" />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Parcelas</label>
+                    <select name="parcelas" [(ngModel)]="dadosCartao.parcelas"
+                            class="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white">
+                      @for (p of opcoesParcelas; track p) {
+                        <option [ngValue]="p">{{ p }}x de {{ (totalCarrinhoComFrete / p) | currency:'BRL' }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              }
+            </div>
+
             <div class="flex justify-end pt-2">
               <button (click)="confirmarCheckout()" [disabled]="finalizandoCheckout"
                       class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors">
-                {{ finalizandoCheckout ? 'Confirmando...' : 'Fechar Compra com Frete Selecionado' }}
+                @if (finalizandoCheckout) {
+                  Processando Pedido...
+                } @else if (metodoPagamentoSelecionado === 'CARTAO_CREDITO') {
+                  Fechar Compra e Pagar com Cartão
+                } @else if (metodoPagamentoSelecionado === 'BOLETO') {
+                  Fechar Compra e Gerar Boleto
+                } @else {
+                  Fechar Compra e Gerar PIX
+                }
               </button>
             </div>
           </section>
@@ -340,22 +626,40 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
     cidade: '',
     estado: 'SP'
   };
+  camposInvalidos: Record<string, boolean> = {};
   buscandoCep = false;
   erroCep: string | null = null;
   private ultimoCepBuscado = '';
 
+  metodoPagamentoSelecionado: MetodoPagamento = 'PIX';
+  opcoesParcelas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  dadosCartao: PagamentoCartaoRequest = {
+    numeroCartao: '',
+    nomeTitular: '',
+    validade: '',
+    cvv: '',
+    parcelas: 1
+  };
+
   compraAguardandoPagamentoId: string | null = null;
   totalAguardandoPagamento = 0;
   pagamento: PagamentoResponse | null = null;
-  gerandoPix = false;
-  pixCopiado = false;
+  processandoPagamento = false;
+  codigoCopiado = false;
   private pollingPagamento: ReturnType<typeof setInterval> | null = null;
 
   finalizandoCheckout = false;
   mensagemSucesso: string | null = null;
   mensagemErro: string | null = null;
 
-  constructor(private projetoService: ApiProjetoService) {}
+  constructor(
+    private projetoService: ApiProjetoService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  get totalCarrinhoComFrete(): number {
+    return (this.cotacao?.subtotalProjetos || 0) + (this.freteSelecionado?.valorFrete || 0);
+  }
 
   ngOnInit(): void {
     if (!keycloak.authenticated) {
@@ -367,6 +671,37 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pararPolling();
+  }
+
+  selecionarMetodoPagamento(metodo: MetodoPagamento): void {
+    this.metodoPagamentoSelecionado = metodo;
+    this.mensagemErro = null;
+  }
+
+  formatarNumeroCartao(valor: string): void {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 16);
+    this.dadosCartao.numeroCartao = digitos.replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
+
+  formatarValidadeCartao(valor: string): void {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 4);
+    this.dadosCartao.validade = digitos.length > 2
+      ? `${digitos.slice(0, 2)}/${digitos.slice(2)}`
+      : digitos;
+  }
+
+  aoDigitarTelefone(valor: string): void {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 11);
+    if (digitos.length > 10) {
+      this.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+    } else if (digitos.length > 6) {
+      this.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+    } else if (digitos.length > 2) {
+      this.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+    } else {
+      this.telefone = digitos;
+    }
+    this.camposInvalidos['telefone'] = false;
   }
 
   private atualizarPagamentoPendente(lista: ProjetoSalvoResponse[]): void {
@@ -383,28 +718,107 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
       mesmaCompra.reduce((s, p) => s + p.valorTotal * p.quantidade, 0) + (aguardando.valorFrete || 0);
   }
 
-  pagarComPix(): void {
-    if (!this.compraAguardandoPagamentoId) return;
-    this.gerandoPix = true;
+  pagarComPix(compraIdAlvo?: string): void {
+    const id = compraIdAlvo || this.compraAguardandoPagamentoId;
+    if (!id) return;
+    this.processandoPagamento = true;
     this.mensagemErro = null;
-    this.projetoService.iniciarPagamentoPix(this.compraAguardandoPagamentoId).subscribe({
+    this.projetoService.iniciarPagamentoPix(id).subscribe({
       next: (pg) => {
-        this.gerandoPix = false;
+        this.processandoPagamento = false;
         this.pagamento = pg;
         this.iniciarPolling();
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        this.gerandoPix = false;
+        this.processandoPagamento = false;
         this.mensagemErro = err?.error?.erro || 'Não foi possível gerar o PIX.';
+        this.cdr.detectChanges();
       }
     });
   }
 
-  copiarPix(): void {
+  pagarComCartao(compraIdAlvo?: string): void {
+    const id = compraIdAlvo || this.compraAguardandoPagamentoId;
+    if (!id) return;
+
+    const digitosCartao = (this.dadosCartao.numeroCartao || '').replace(/\D/g, '');
+    if (digitosCartao.length < 13) {
+      this.mensagemErro = 'Informe um número de cartão válido (13 a 16 dígitos).';
+      return;
+    }
+    if (!(this.dadosCartao.nomeTitular || '').trim()) {
+      this.mensagemErro = 'Informe o nome impresso no cartão.';
+      return;
+    }
+    if (!/^(0[1-9]|1[0-2])\/\d{2,4}$/.test((this.dadosCartao.validade || '').trim())) {
+      this.mensagemErro = 'Informe a validade do cartão no formato MM/AA.';
+      return;
+    }
+    if (!/^\d{3,4}$/.test((this.dadosCartao.cvv || '').trim())) {
+      this.mensagemErro = 'Informe o código CVV de 3 ou 4 dígitos do cartão.';
+      return;
+    }
+
+    this.processandoPagamento = true;
+    this.mensagemErro = null;
+    this.projetoService.pagarComCartao(id, this.dadosCartao).subscribe({
+      next: () => {
+        this.processandoPagamento = false;
+        this.pararPolling();
+        this.pagamento = null;
+        this.mensagemSucesso = `Pagamento no Cartão de Crédito (${this.dadosCartao.parcelas}x) aprovado! Seu pedido já entrou em produção na marcenaria.`;
+        this.carregarProjetos();
+      },
+      error: (err) => {
+        this.processandoPagamento = false;
+        this.mensagemErro = err?.error?.erro || 'Não foi possível processar o cartão de crédito.';
+      }
+    });
+  }
+
+  gerarBoleto(compraIdAlvo?: string): void {
+    const id = compraIdAlvo || this.compraAguardandoPagamentoId;
+    if (!id) return;
+    this.processandoPagamento = true;
+    this.mensagemErro = null;
+    this.projetoService.iniciarPagamentoBoleto(id).subscribe({
+      next: (pg) => {
+        this.processandoPagamento = false;
+        this.pagamento = pg;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.processandoPagamento = false;
+        this.mensagemErro = err?.error?.erro || 'Não foi possível emitir o boleto.';
+      }
+    });
+  }
+
+  confirmarPagamentoSimulado(): void {
+    if (!this.compraAguardandoPagamentoId) return;
+    this.processandoPagamento = true;
+    this.mensagemErro = null;
+    this.projetoService.simularAprovacaoPagamento(this.compraAguardandoPagamentoId).subscribe({
+      next: () => {
+        this.processandoPagamento = false;
+        this.pararPolling();
+        this.pagamento = null;
+        this.mensagemSucesso = 'Pagamento confirmado com sucesso! Seu pedido já entrou na esteira de produção.';
+        this.carregarProjetos();
+      },
+      error: (err) => {
+        this.processandoPagamento = false;
+        this.mensagemErro = err?.error?.erro || 'Erro ao confirmar pagamento.';
+      }
+    });
+  }
+
+  copiarCodigoPagamento(): void {
     if (!this.pagamento?.pixCopiaCola) return;
     navigator.clipboard.writeText(this.pagamento.pixCopiaCola).then(() => {
-      this.pixCopiado = true;
-      setTimeout(() => (this.pixCopiado = false), 2000);
+      this.codigoCopiado = true;
+      setTimeout(() => (this.codigoCopiado = false), 2000);
     });
   }
 
@@ -423,7 +837,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
           } else if (pg.status !== 'PENDENTE') {
             this.pararPolling();
             this.pagamento = null;
-            this.mensagemErro = 'O pagamento não foi concluído. Gere um novo PIX para tentar novamente.';
+            this.mensagemErro = 'O pagamento não foi concluído. Escolha uma forma de pagamento para tentar novamente.';
           }
         },
         error: () => {}
@@ -438,7 +852,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
     }
   }
 
-  carregarProjetos(): void {
+  carregarProjetos(acaoPosCarregar?: () => void): void {
     this.isLoading = true;
     this.projetoService.listarMeusProjetos().subscribe({
       next: (lista) => {
@@ -455,6 +869,10 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
           this.compraAbertaId = null;
           this.cotacao = null;
         }
+
+        if (acaoPosCarregar) {
+          acaoPosCarregar();
+        }
       },
       error: (err) => {
         console.error('Erro ao buscar projetos', err);
@@ -469,6 +887,7 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
       ? `${digitos.slice(0, 5)}-${digitos.slice(5)}`
       : digitos;
     this.erroCep = null;
+    this.camposInvalidos['cep'] = false;
 
     if (digitos.length === 8 && digitos !== this.ultimoCepBuscado) {
       this.consultarViaCep(digitos, true);
@@ -486,46 +905,44 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
     }
   }
 
-  async consultarViaCep(cepLimpo: string, atualizarFrete = true): Promise<void> {
+  consultarViaCep(cepLimpo: string, atualizarFrete = true): void {
     this.buscandoCep = true;
     this.erroCep = null;
     this.ultimoCepBuscado = cepLimpo;
 
-    try {
-      const resp = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-      if (resp.ok) {
-        const dados = await resp.json();
-        if (!dados.erro) {
-          this.endereco.logradouro = dados.logradouro || this.endereco.logradouro;
-          this.endereco.bairro = dados.bairro || this.endereco.bairro;
-          this.endereco.cidade = dados.localidade || this.endereco.cidade;
-          this.endereco.estado = dados.uf || this.endereco.estado;
-          if (!this.endereco.complemento && dados.complemento) {
-            this.endereco.complemento = dados.complemento;
-          }
-          return;
+    this.projetoService.consultarViaCep(cepLimpo).subscribe({
+      next: (dados) => {
+        this.buscandoCep = false;
+        if (dados && !dados.erro) {
+          this.endereco = {
+            ...this.endereco,
+            cep: `${cepLimpo.slice(0, 5)}-${cepLimpo.slice(5)}`,
+            logradouro: dados.logradouro || this.endereco.logradouro || '',
+            bairro: dados.bairro || this.endereco.bairro || '',
+            cidade: dados.localidade || this.endereco.cidade || '',
+            estado: dados.uf || this.endereco.estado || 'SP',
+            complemento: this.endereco.complemento || dados.complemento || ''
+          };
+          this.camposInvalidos['cep'] = false;
+          if (this.endereco.logradouro) this.camposInvalidos['logradouro'] = false;
+          if (this.endereco.cidade) this.camposInvalidos['cidade'] = false;
+        } else {
+          this.erroCep = 'CEP não encontrado. Preencha rua e cidade manualmente.';
+        }
+        this.cdr.detectChanges();
+        if (atualizarFrete) {
+          this.recalcularFrete(false);
+        }
+      },
+      error: () => {
+        this.buscandoCep = false;
+        this.erroCep = 'Não foi possível consultar o CEP automaticamente.';
+        this.cdr.detectChanges();
+        if (atualizarFrete) {
+          this.recalcularFrete(false);
         }
       }
-
-      // Fallback para BrasilAPI caso ViaCEP retorne erro ou indisponibilidade
-      const respBr = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
-      if (respBr.ok) {
-        const dadosBr = await respBr.json();
-        this.endereco.logradouro = dadosBr.street || this.endereco.logradouro;
-        this.endereco.bairro = dadosBr.neighborhood || this.endereco.bairro;
-        this.endereco.cidade = dadosBr.city || this.endereco.cidade;
-        this.endereco.estado = dadosBr.state || this.endereco.estado;
-      } else {
-        this.erroCep = 'CEP não encontrado. Preencha os campos manualmente.';
-      }
-    } catch {
-      this.erroCep = 'Não foi possível consultar o CEP automaticamente.';
-    } finally {
-      this.buscandoCep = false;
-      if (atualizarFrete) {
-        this.recalcularFrete(false);
-      }
-    }
+    });
   }
 
   recalcularFrete(carregarEnderecoSalvo = false): void {
@@ -542,10 +959,19 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
             this.telefone = cot.telefoneAtual;
           }
           if (cot.enderecoAtual && cot.enderecoAtual.cep) {
-            this.endereco = { ...cot.enderecoAtual };
-            this.ultimoCepBuscado = cot.enderecoAtual.cep.replace(/\D/g, '');
+            this.endereco = {
+              cep: cot.enderecoAtual.cep || '',
+              logradouro: cot.enderecoAtual.logradouro || '',
+              numero: cot.enderecoAtual.numero || '',
+              complemento: cot.enderecoAtual.complemento || '',
+              bairro: cot.enderecoAtual.bairro || '',
+              cidade: cot.enderecoAtual.cidade || '',
+              estado: cot.enderecoAtual.estado || 'SP'
+            };
+            this.ultimoCepBuscado = (cot.enderecoAtual.cep || '').replace(/\D/g, '');
           }
         }
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Erro ao cotar frete', err)
     });
@@ -553,26 +979,77 @@ export class MeusProjetosComponent implements OnInit, OnDestroy {
 
   confirmarCheckout(): void {
     if (!this.compraAbertaId || !this.freteSelecionado) return;
-    if (!this.telefone.trim() || !this.endereco.cep.trim() || !this.endereco.logradouro.trim() || !this.endereco.numero.trim() || !this.endereco.cidade.trim()) {
-      this.mensagemErro = 'Preencha telefone, CEP, rua, número e cidade para calcular a entrega.';
+
+    const tel = (this.telefone || '').trim();
+    const cep = (this.endereco.cep || '').trim();
+    const rua = (this.endereco.logradouro || '').trim();
+    const num = (this.endereco.numero || '').trim();
+    const cid = (this.endereco.cidade || '').trim();
+
+    this.camposInvalidos = {
+      cep: !cep,
+      telefone: !tel,
+      logradouro: !rua,
+      numero: !num,
+      cidade: !cid
+    };
+
+    const faltando: string[] = [];
+    if (!cep) faltando.push('CEP');
+    if (!tel) faltando.push('Telefone / WhatsApp');
+    if (!rua) faltando.push('Rua / Logradouro');
+    if (!num) faltando.push('Número');
+    if (!cid) faltando.push('Cidade');
+
+    if (faltando.length > 0) {
+      this.mensagemErro = `Por favor, preencha os campos obrigatórios destacados em vermelho: ${faltando.join(', ')}.`;
       return;
     }
+
+    // Se escolheu Cartão já no checkout, valida os dados do cartão antes de fechar a compra
+    if (this.metodoPagamentoSelecionado === 'CARTAO_CREDITO') {
+      const digitosCartao = (this.dadosCartao.numeroCartao || '').replace(/\D/g, '');
+      if (digitosCartao.length < 13 || !(this.dadosCartao.nomeTitular || '').trim()
+          || !/^(0[1-9]|1[0-2])\/\d{2,4}$/.test((this.dadosCartao.validade || '').trim())
+          || !/^\d{3,4}$/.test((this.dadosCartao.cvv || '').trim())) {
+        this.mensagemErro = 'Preencha todos os dados do Cartão de Crédito (número, nome, validade MM/AA e CVV) para finalizar.';
+        return;
+      }
+    }
+
+    const idCompra = this.compraAbertaId;
+    const metodoEscolhido = this.metodoPagamentoSelecionado;
 
     this.finalizandoCheckout = true;
     this.mensagemErro = null;
     this.mensagemSucesso = null;
 
-    this.projetoService.finalizarCheckout(this.compraAbertaId, {
-      telefone: this.telefone,
-      endereco: this.endereco,
+    this.projetoService.finalizarCheckout(idCompra, {
+      telefone: tel,
+      endereco: {
+        cep,
+        logradouro: rua,
+        numero: num,
+        complemento: (this.endereco.complemento || '').trim(),
+        bairro: (this.endereco.bairro || '').trim(),
+        cidade: cid,
+        estado: (this.endereco.estado || 'SP').trim().toUpperCase()
+      },
       transportadora: this.freteSelecionado.transportadora,
       valorFrete: this.freteSelecionado.valorFrete,
       prazoFreteDias: this.freteSelecionado.prazoDias
     }).subscribe({
       next: () => {
         this.finalizandoCheckout = false;
-        this.mensagemSucesso = 'Compra fechada com sucesso! Agora aguarde a confirmação do pagamento pela loja.';
-        this.carregarProjetos();
+        this.carregarProjetos(() => {
+          if (metodoEscolhido === 'CARTAO_CREDITO') {
+            this.pagarComCartao(idCompra);
+          } else if (metodoEscolhido === 'BOLETO') {
+            this.gerarBoleto(idCompra);
+          } else {
+            this.pagarComPix(idCompra);
+          }
+        });
       },
       error: (err) => {
         this.finalizandoCheckout = false;

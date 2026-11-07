@@ -5,6 +5,7 @@ import {
   CotacaoFreteResponse,
   CriarProjetoRequest,
   FinalizarCheckoutRequest,
+  PagamentoCartaoRequest,
   PagamentoResponse,
   ProjetoSalvoResponse
 } from '../models/models';
@@ -40,7 +41,37 @@ export class ApiProjetoService {
     return this.http.post<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento/pix`, {});
   }
 
+  pagarComCartao(compraId: string, req: PagamentoCartaoRequest): Observable<PagamentoResponse> {
+    return this.http.post<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento/cartao`, req);
+  }
+
+  iniciarPagamentoBoleto(compraId: string): Observable<PagamentoResponse> {
+    return this.http.post<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento/boleto`, {});
+  }
+
+  simularAprovacaoPagamento(compraId: string): Observable<PagamentoResponse> {
+    return this.http.post<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento/simular-aprovacao`, {});
+  }
+
   consultarPagamento(compraId: string): Observable<PagamentoResponse> {
     return this.http.get<PagamentoResponse>(`${this.comprasUrl}/${compraId}/pagamento`);
+  }
+
+  consultarViaCep(cepLimpo: string): Observable<{
+    erro?: boolean;
+    logradouro?: string;
+    complemento?: string;
+    bairro?: string;
+    localidade?: string;
+    uf?: string;
+  }> {
+    return this.http.get<{
+      erro?: boolean;
+      logradouro?: string;
+      complemento?: string;
+      bairro?: string;
+      localidade?: string;
+      uf?: string;
+    }>(`https://viacep.com.br/ws/${cepLimpo}/json/`);
   }
 }
